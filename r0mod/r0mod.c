@@ -40,7 +40,7 @@ static int __init r0mod_init(void)
     syscall_table = (unsigned long*)find();
 
     if(syscall_table != NULL)
-        printk("Syscall table found at %x\n", (unsigned )syscall_table);
+        printk("Syscall table found at %x\n", (unsigned *)syscall_table);
     else
         printk("Syscall table not found!\n");
 
