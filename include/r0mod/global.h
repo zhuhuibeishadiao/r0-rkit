@@ -6,6 +6,9 @@
 #       include <linux/printk.h>    // printk.
 #   endif
 
+asmlinkage long (*real_sys_openat)
+    (unsigned int, const char __user*, int, umode_t);
+
 // Helper functions for loggers
 // INFO: ``fn`` is short for ``__func__``.
 #   define fn_printk(level, fmt, ...)                               \
