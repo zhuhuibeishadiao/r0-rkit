@@ -7,7 +7,6 @@
 #include <asm/current.h>
 #include <linux/sched.h>
 #include <linux/syscalls.h>
-#include <asm/system.h>
 
 #include <r0mod/global.h>
 
