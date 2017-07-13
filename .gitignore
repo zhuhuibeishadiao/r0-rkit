@@ -1,0 +1,8 @@
+*.project
+r0mod/.tmp_versions
+r0mod/*.cmd
+r0mod/*.symvers
+r0mod/*.order
+r0mod/*.ko
+r0mod/*.mod.*
+r0mod/*.o
