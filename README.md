@@ -1,3 +1,3 @@
-# R0_rkit
-Ring-0 LKM Rootkit
+# R0-rkit
+Ring-0 Kern > Ring-3 User Rootkit
 
