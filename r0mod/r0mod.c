@@ -7,13 +7,16 @@
 
 #include <r0mod/global.h>
 
+static int __init r0mod_init(void)
+{
+    fm_alert("%s\n", "R0Mod: Initialized.");
+
+    return 0;
+}
+
+
 static void __exit r0mod_exit(void)
 {
-    disable_wp();
-    UNHOOK_SCT(sct, getdents);
-    UNHOOK_SCT(sct, getdents64);
-    enable_wp();
-
     fm_alert("%s\n", "R0Mod: Uninitialized.");
 
     return;
