@@ -13,7 +13,7 @@
 #define START_MEM   0xc0000000
 #define END_MEM     0xd0000000
 
-unsigned int *syscall_table;
+unsigned long *syscall_table;
 
 unsigned long **find(void)
 {
@@ -27,7 +27,7 @@ unsigned long **find(void)
         if(sctable[__NR_close] == (unsigned long *)sys_close)
             return &sctable[0];
 
-        i += sizeof(void*);
+        i += sizeof(void *);
     }
 
     return NULL;
@@ -37,10 +37,10 @@ static int __init r0mod_init(void)
 {
     printk("Module starting...\n");
 
-    syscall_table = (unsigned int *)find();
+    syscall_table = (unsigned long *)find();
 
     if(syscall_table != NULL)
-        printk("Syscall table found at 0x%ls\n", syscall_table);
+        printk("Syscall table found at %ln\n", (unsigned long int*)syscall_table);
     else
         printk("Syscall table not found!\n");
 
