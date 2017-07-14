@@ -9,7 +9,7 @@
 
 #include <r0mod/global.h>
 
-#define SEARCH_START    PAGE_OFFSET - 0x00000000
+#define SEARCH_START    PAGE_OFFSET - 0x000f0000
 #define SEARCH_END      PAGE_OFFSET //+ 0x01000000//0x4fffffff //0xffffffff
 
 unsigned long *syscall_table;
