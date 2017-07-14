@@ -14,12 +14,16 @@ static unsigned long **aquire_sct(void)
     while(offset < ULLONG_MAX)
     {
         sct = (unsigned long **)offset;
-        if(sct[__NR_close] == (unsigned long *) sys_close)
+        if(sct[__NR_close] == (unsigned long *)sys_close)
+        {
+            printk("<0>" "Succeeded to get sys_call_table!\n");
             return sct;
+        }
 
         offset += sizeof(void *);
     }
-    printk("Getting syscall table failed. :(");
+
+    printk("<0>" "Failed to get sys_call_table!\n");
 
     return NULL;
 }
@@ -51,7 +55,9 @@ static int __init r0mod_init(void)
     printk("Module starting...\n");
 
     if(!(sct = aquire_sct()))
+    {
         return -1;
+    }
 
     printk("sct: %lx", (unsigned long)sct);
 
