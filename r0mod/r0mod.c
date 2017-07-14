@@ -2,16 +2,9 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <linux/unistd.h>
 #include <linux/syscalls.h>
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/unistd.h>
-#include <asm/cacheflush.h>
-#include <asm/page.h>
-#include <asm/current.h>
-#include <linux/sched.h>
-#include <linux/kallsyms.h>
 #include <asm/paravirt.h> /* write_cr0 */
 
 #include <r0mod/global.h>
@@ -51,8 +44,6 @@ static int __init r0mod_init(void)
 
     write_cr0(read_cr0() & ~0x10000);
 
-
-
     write_cr0(read_cr0() | 0x10000);
 
     // Now use sys_call_table
@@ -64,6 +55,12 @@ static int __init r0mod_init(void)
 static void __exit r0mod_exit(void)
 {
     printk("Module ending...");
+
+    if(syscall_table != NULL)
+    {
+        write_cr0(read_cr0() & ~0x10000);
+        write_cr0(read_cr0() | 0x10000);
+    }
 }
 
 MODULE_LICENSE("GPL");
