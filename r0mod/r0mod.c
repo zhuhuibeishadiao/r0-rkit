@@ -67,9 +67,9 @@ unsigned long *find_sys_call_table(void)
             printk("sys_call_table found @ %lx\n", (unsigned long)sct);
             return sct;
         }
-        else
-            printk("Addr: %lx\n", i);
     }
+
+    printk("sys_call_table NOT found between %lx to %lx", SEARCH_START, SEARCH_END);
 
     return NULL;
 }
