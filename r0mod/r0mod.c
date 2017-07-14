@@ -47,7 +47,7 @@ static int __init r0mod_init(void)
         return 0;
     }
 
-    printk("sys_call_table hooked @ %lx", (unsigned long int)syscall_table);
+    printk("sys_call_table hooked @ %lx", (unsigned long)syscall_table);
 
     write_cr0(read_cr0() & ~0x10000);
 
