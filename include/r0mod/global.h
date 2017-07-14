@@ -6,8 +6,6 @@
 #       include <linux/printk.h>    // printk.
 #   endif
 
-
-
 // Helper functions for loggers
 // INFO: ``fn`` is short for ``__func__``.
 #   define fn_printk(level, fmt, ...)                               \
