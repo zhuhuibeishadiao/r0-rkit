@@ -10,7 +10,7 @@
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      ULLONG_MAX //PAGE_OFFSET + 0xffffffff
+#define SEARCH_END      PAGE_OFFSET + 0xffffffff
 
 unsigned long *syscall_table;
 
@@ -59,7 +59,6 @@ static int __init r0mod_init(void)
     printk("Search Start: %lx\n", SEARCH_START);
     printk("Search End:   %lx\n", SEARCH_END);
 
-    //syscall_table = (void *)find_sys_call_table();
     if((syscall_table = (void *)find_sys_call_table()) == NULL)
     {
         printk("syscall_table == NULL\n");
