@@ -1,15 +1,23 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+
 #include <linux/syscalls.h>
 
+#include <linux/errno.h>
+#include <linux/types.h>
+#include <linux/unistd.h>
+#include <asm/cacheflush.h>
+#include <asm/page.h>
+#include <asm/current.h>
+#include <linux/sched.h>
+#include <linux/kallsyms.h>
 
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX
 
-unsigned long cr0;
 unsigned long *syscall_table;
 
 unsigned long *find_sys_call_table(void)
@@ -27,32 +35,20 @@ unsigned long *find_sys_call_table(void)
     return NULL;
 }
 
-static inline void disable_wp(unsigned long cr0)
-{
-    write_cr0(cr0 & ~0x00010000);
-}
-
-static inline void restore_wp(unsigned long cr0)
-{
-    write_cr0(cr0);
-}
-
 static int __init r0mod_init(void)
 {
-    printk("Module starting...");
+    struct page *_sys_call_page;
 
-    disable_wp(cr0);
+    printk("Module starting...");
 
     syscall_table = find_sys_call_table();
     if(syscall_table == NULL)
     {
-        printk("syscall_table addr = NULL");
-        return 1;
+        printk("syscall_table == NULL");
+        return 0;
     }
 
-    printk("syscall_table addr = %lx", (unsigned long)syscall_table);
-
-    restore_wp(cr0);
+    _sys_call_page = virt_to_page(&syscall_table);
 
     return 0;
 }
@@ -61,8 +57,6 @@ static int __init r0mod_init(void)
 static void __exit r0mod_exit(void)
 {
     printk("Module ending...");
-
-
 }
 
 MODULE_LICENSE("GPL");
