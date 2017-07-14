@@ -1,4 +1,6 @@
 *.project
+r0bin/r0bin
+r0bin/*.o
 r0mod/.tmp_versions
 r0mod/*.cmd
 r0mod/*.symvers
