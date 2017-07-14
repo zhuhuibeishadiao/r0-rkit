@@ -9,8 +9,8 @@
 
 #include <r0mod/global.h>
 
-#define SEARCH_START    0xc0000000
-#define SEARCH_END      0xd0000000
+#define SEARCH_START    (unsigned long)0x80000000
+#define SEARCH_END      (unsigned long)0x8fffffff
 
 unsigned long *syscall_table;
 
