@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    setreuid (1000, 1000);
+    setreuid(1000, 1000);
     system("/bin/sh");
     return 0;
 }

