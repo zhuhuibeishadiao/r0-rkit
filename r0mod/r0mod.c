@@ -12,6 +12,7 @@
 #include <asm/current.h>
 #include <linux/sched.h>
 #include <linux/kallsyms.h>
+#include <asm/paravirt.h> /* write_cr0 */
 
 #include <r0mod/global.h>
 
@@ -37,8 +38,6 @@ unsigned long *find_sys_call_table(void)
 
 static int __init r0mod_init(void)
 {
-    struct page *_sys_call_page;
-
     printk("Module starting...");
 
     syscall_table = find_sys_call_table();
@@ -48,7 +47,15 @@ static int __init r0mod_init(void)
         return 0;
     }
 
-    _sys_call_page = virt_to_page(&syscall_table);
+    printk("sys_call_table hooked @ %ln!", syscall_table);
+
+    write_cr0(read_cr0() & ~0x10000);
+
+
+
+    write_cr0(read_cr0() | 0x10000);
+
+    // Now use sys_call_table
 
     return 0;
 }
