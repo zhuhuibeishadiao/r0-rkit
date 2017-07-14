@@ -2,6 +2,7 @@
 #   define _R0MOD_GLOBAL_H
 
 #   ifndef CPP
+#       include <linux/kernel.h>
 #       include <linux/module.h>
 #       include <linux/printk.h>    // printk.
 #   endif
