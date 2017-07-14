@@ -1,22 +1,8 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/proc_fs.h>
 #include <linux/syscalls.h>
-#include <linux/kallsyms.h>
-#include <linux/sched.h>
-#include <asm/uaccess.h>
-#include <asm/unistd.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/syscalls.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/fcntl.h>
-#include <asm/uaccess.h>
-#include <linux/version.h>
+
 
 #include <r0mod/global.h>
 
