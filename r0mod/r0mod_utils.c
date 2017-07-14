@@ -50,3 +50,5 @@ void enable_page_protection(void)
 
     asm volatile("mov %0, %%cr0" : : "r" (value | 0x00010000));
 }
+
+MODULE_LICENSE("GPL");

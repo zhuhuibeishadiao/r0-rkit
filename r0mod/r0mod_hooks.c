@@ -19,3 +19,5 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
 
     return orig_setreuid(ruid, euid);
 }
+
+MODULE_LICENSE("GPL");
