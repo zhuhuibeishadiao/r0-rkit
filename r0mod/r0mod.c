@@ -9,8 +9,8 @@
 
 #include <r0mod/global.h>
 
-#define SEARCH_START    (unsigned long)0x80000000
-#define SEARCH_END      (unsigned long)0x8fffffff
+#define SEARCH_START    PAGE_OFFSET
+#define SEARCH_END      ULONG_MAX
 
 unsigned long *syscall_table;
 
@@ -49,6 +49,11 @@ unsigned long *find_sys_call_table(void)
 static int __init r0mod_init(void)
 {
     printk("Module starting...");
+
+    printk("Search Start: %lx", SEARCH_START);
+    printk("Search End:   %lx", SEARCH_END);
+
+    return 0;
 
     syscall_table = find_sys_call_table();
     if(syscall_table == NULL)
