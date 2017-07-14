@@ -1,3 +1,4 @@
+#include <linux/kernel.h>
 #include <linux/module.h>
 
 #include <linux/unistd.h>
@@ -7,7 +8,6 @@
 #include <r0mod/hooks.h>
 #include <r0mod/utils.h>
 
-extern unsigned long **sct;
 
 static int __init r0mod_init(void)
 {
