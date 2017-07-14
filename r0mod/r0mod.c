@@ -16,14 +16,14 @@ static unsigned long **aquire_sct(void)
         sct = (unsigned long **)offset;
         if(sct[__NR_close] == (unsigned long *)sys_close)
         {
-            printk("<0>" "Succeeded to get sys_call_table!\n");
+            printk(KERN_INFO "Succeeded to get sys_call_table!\n");
             return sct;
         }
 
         offset += sizeof(void *);
     }
 
-    printk("<0>" "Failed to get sys_call_table!\n");
+    printk(KERN_WARN "Failed to get sys_call_table!\n");
 
     return NULL;
 }
@@ -52,21 +52,21 @@ static void enable_page_protection(void)
 
 static int __init r0mod_init(void)
 {
-    printk("<0>" "Module starting...\n");
+    printk(KERN_INFO "Module starting...\n");
 
     if(!(sct = aquire_sct()))
     {
         return -1;
     }
 
-    printk("<0>" "sct: %lx\n", (unsigned long)sct);
+    printk(KERN_INFO "sct: %lx\n", (unsigned long)sct);
 
     return 0;
 }
 
 static void __exit r0mod_exit(void)
 {
-    printk("Module ending...\n");
+    printk(KERN_INFO "Module ending...\n");
 }
 
 MODULE_LICENSE("GPL");
