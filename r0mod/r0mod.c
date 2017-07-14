@@ -50,10 +50,10 @@ static int __init r0mod_init(void)
 {
     printk("Module starting...\n");
 
-    if(!(sct = aquire_stc()))
+    if(!(sct = aquire_sct()))
         return -1;
 
-    printk("stc: %lx", (unsigned long)stc);
+    printk("sct: %lx", (unsigned long)sct);
 
     return 0;
 }
