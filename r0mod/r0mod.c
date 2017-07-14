@@ -1,3 +1,5 @@
+#include <linux/module.h>
+
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
 
