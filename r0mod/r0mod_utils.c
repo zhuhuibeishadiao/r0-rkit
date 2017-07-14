@@ -17,14 +17,14 @@ unsigned long **locate_sct(void)
         sct = (unsigned long **)offset;
         if(sct[__NR_close] == (unsigned long *)sys_close)
         {
-            printk("Succeeded to get sys_call_table!\n");
+            fm_alert("Succeeded to get sys_call_table!\n");
             return sct;
         }
 
         offset += sizeof(void *);
     }
 
-    printk("Failed to get sys_call_table!\n");
+    fm_alert("Failed to get sys_call_table!\n");
 
     return NULL;
 }
