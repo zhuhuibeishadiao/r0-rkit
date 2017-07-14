@@ -2,19 +2,12 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <linux/highmem.h>
-#include <asm/unistd.h>
-
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
 
 #include <asm/paravirt.h> /* write_cr0 */
 
 #include <r0mod/global.h>
-
-/* IOCTL commands */
-#define IOCTL_PATCH_TABLE 0x00000001
-#define IOCTL_FIX_table   0x00000004
 
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      PAGE_OFFSET + 0xffffffff
