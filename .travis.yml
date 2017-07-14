@@ -1,6 +1,7 @@
 language: c
 sudo: required
 script:
+  - sudo apt-get install -y linux-headers-uname -r`
   - make
   - sudo insmod r0mod/r0mod.ko
 
