@@ -44,6 +44,9 @@ static void __exit r0mod_exit(void)
     }
 }
 
-MODULE_LICENSE("GPL");
 module_init(r0mod_init);
 module_exit(r0mod_exit);
+
+MODULE_DESCRIPTION("Description");
+MODULE_AUTHOR("Author");
+MODULE_LICENSE("GPL");
