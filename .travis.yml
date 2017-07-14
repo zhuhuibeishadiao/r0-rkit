@@ -1,0 +1,9 @@
+language: c
+sudo: true
+script:
+  - make all
+  - sudo insmod r0mod/r0mod.ko
+  -	./r0bin/r0bin
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
