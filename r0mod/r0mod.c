@@ -4,9 +4,9 @@
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
 
-unsigned long **sys_call_table;
+unsigned long **sct;
 
-static unsigned long **aquire_sys_call_table(void)
+static unsigned long **aquire_sct(void)
 {
     unsigned long int offset = PAGE_OFFSET;
     unsigned long **sct;
@@ -50,10 +50,10 @@ static int __init r0mod_init(void)
 {
     printk("Module starting...\n");
 
-    if(!(sys_call_table = aquire_sys_call_table()))
+    if(!(sct = aquire_stc()))
         return -1;
 
-    printk("sys_call_table: %lx", (unsigned long)sys_call_table);
+    printk("stc: %lx", (unsigned long)stc);
 
     return 0;
 }
