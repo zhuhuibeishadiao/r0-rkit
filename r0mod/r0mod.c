@@ -52,14 +52,14 @@ static void enable_page_protection(void)
 
 static int __init r0mod_init(void)
 {
-    printk("Module starting...\n");
+    printk("<0>" "Module starting...\n");
 
     if(!(sct = aquire_sct()))
     {
         return -1;
     }
 
-    printk("sct: %lx", (unsigned long)sct);
+    printk("<0>" "sct: %lx\n", (unsigned long)sct);
 
     return 0;
 }
