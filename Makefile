@@ -1,9 +1,9 @@
 default:
 	@echo
-	@echo "To start the build of r0mod:"
+	@echo "To start the build of r0-rkit:"
 	@echo "	make (all OR TARGET)"
 	@echo
-	@echo "To clean the build of r0mod:"
+	@echo "To clean the build of r0-rkit:"
 	@echo "	make clean"
 	@echo
 	@echo "Supported targets:"
