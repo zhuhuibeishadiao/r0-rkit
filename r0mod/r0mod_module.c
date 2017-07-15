@@ -51,3 +51,5 @@ void enable_module_loading(void)
 {
     unregister_module_notifier(&nb);
 }
+
+MODULE_LICENSE("GPL");

@@ -228,3 +228,5 @@ unsigned long get_symbol(char *name)
     return symbol;
 }
 #endif
+
+MODULE_LICENSE("GPL");
