@@ -387,6 +387,8 @@ static int __init r0mod_init(void)
         DEBUG("ia32_sct == NULL");
 #endif
 
+    return 0;
+
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL\n");
 
