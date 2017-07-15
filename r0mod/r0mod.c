@@ -384,7 +384,7 @@ static int __init r0mod_init(void)
 
 #if defined(_CONFIG_X86_64_)
     if((ia32_sct = (void *)find_ia32_sct()) == NULL)
-        DEBUG"ia32_sct == NULL");
+        DEBUG("ia32_sct == NULL");
 #endif
 
     if((sct = (void *)find_sct()) == NULL)

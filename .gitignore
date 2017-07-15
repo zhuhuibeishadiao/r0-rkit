@@ -1,4 +1,5 @@
 *.project
+Release/*
 r0bin/r0bin
 r0bin/*.o
 r0mod/.tmp_versions
