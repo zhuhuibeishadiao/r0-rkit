@@ -1,6 +1,7 @@
+obj-m += r0mod.o
+r0mod-objs := r0mod.o r0mod_utils.o r0mod_module.o
+
 OLDPWD = $(PWD)
-TARGET = r0mod
-obj-m += $(TARGET).o
 
 all:
 	KCPPFLAGS="-I$(OLDPWD)/../include/" \
