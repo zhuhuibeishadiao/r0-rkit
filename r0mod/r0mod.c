@@ -42,7 +42,6 @@ static int (*root_iterate)(struct file *file, struct dir_context *);
     *((filldir_t *)&ctx->actor) = &FILLDIR_FUNC;    \
     ret = ITERATE_FUNC(file, ctx);                  \
 }
-#endif
 
 struct s_proc_args
 {
