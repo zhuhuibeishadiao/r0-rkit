@@ -4,7 +4,7 @@ dist: trusty
 script:
   - sudo apt-get install -y linux-headers-`uname -r`
   - make
-  - sudo insmod r0mod/r0mod.ko
+  - sudo insmod Release/r0mod_x86_64.ko
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
