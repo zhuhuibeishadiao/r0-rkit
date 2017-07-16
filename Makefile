@@ -22,7 +22,7 @@ x86_64:
 	mkdir -p Release/
 	cd r0bin && make all
 	cd r0mod && make linux-x86_64
-res
+
 clean:
 	cd r0bin && make clean
 	cd r0mod && make clean
