@@ -3,4 +3,5 @@ all:
 	cp r0bin ../Release
 
 clean:
-	rm -rf r0bin
+	rm -f r0bin
+	rm -f ../Release/r0bin

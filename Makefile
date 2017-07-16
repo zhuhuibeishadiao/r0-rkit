@@ -11,16 +11,18 @@ default:
 	@echo "	x86_64	- Linux, x86_64"
 	@echo
 
-all: x86 x86_64
+all: clean x86 x86_64
 
 x86:
+	mkdir -p Release/
 	cd r0bin && make all
 	cd r0mod && make linux-x86
 
 x86_64:
+	mkdir -p Release/
 	cd r0bin && make all
 	cd r0mod && make linux-x86_64
-
+res
 clean:
 	cd r0bin && make clean
 	cd r0mod && make clean
