@@ -5,9 +5,9 @@ script:
   - sudo apt-get install -y linux-headers-`uname -r`
   - make all
   - sudo insmod Release/r0mod-x86.ko
+  - sudo lsmod r0mod-x86.ko
   - sudo insmod Release/r0mod-x86_64.ko
-  - ./Release/r0bin
-  - id
+  - sudo lsmod r0mod-x86_64.ko
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
