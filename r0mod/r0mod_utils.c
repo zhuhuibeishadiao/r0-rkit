@@ -30,8 +30,6 @@ struct ksym
 
 LIST_HEAD(hooked_syms);
 
-#if defined(_CONFIG_X86_) || defined(_CONFIG_X86_64_)
-// Thanks Dan
 inline unsigned long disable_wp ( void )
 {
     unsigned long cr0;
@@ -51,7 +49,6 @@ inline void restore_wp ( unsigned long cr0 )
     barrier();
     preempt_enable();
 }
-#endif
 
 void hijack_start ( void *target, void *new )
 {
@@ -76,11 +73,9 @@ void hijack_start ( void *target, void *new )
 
     memcpy(o_code, target, HIJACK_SIZE);
 
-    #if defined(_CONFIG_X86_) || defined(_CONFIG_X86_64_)
     o_cr0 = disable_wp();
     memcpy(target, n_code, HIJACK_SIZE);
     restore_wp(o_cr0);
-    #endif
 
     sa = kmalloc(sizeof(*sa), GFP_KERNEL);
     if(!sa)
@@ -103,11 +98,9 @@ void hijack_pause ( void *target )
     {
         if ( target == sa->addr )
         {
-            #if defined(_CONFIG_X86_) || defined(_CONFIG_X86_64_)
             unsigned long o_cr0 = disable_wp();
             memcpy(target, sa->o_code, HIJACK_SIZE);
             restore_wp(o_cr0);
-            #endif
         }
     }
 }
@@ -122,11 +115,9 @@ void hijack_resume(void *target)
     {
         if(target == sa->addr)
         {
-            #if defined(_CONFIG_X86_) || defined(_CONFIG_X86_64_)
             unsigned long o_cr0 = disable_wp();
             memcpy(target, sa->n_code, HIJACK_SIZE);
             restore_wp(o_cr0);
-            #endif
         }
     }
 }
@@ -141,11 +132,9 @@ void hijack_stop(void *target)
     {
         if(target == sa->addr)
         {
-            #if defined(_CONFIG_X86_) || defined(_CONFIG_X86_64_)
             unsigned long o_cr0 = disable_wp();
             memcpy(target, sa->o_code, HIJACK_SIZE);
             restore_wp(o_cr0);
-            #endif
 
             list_del(&sa->list);
             kfree(sa);
