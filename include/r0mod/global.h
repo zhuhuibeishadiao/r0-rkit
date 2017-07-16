@@ -14,7 +14,6 @@
 #   endif
 
 #   define CMD_ROOT         0
-#   define CMD_HIDE_FILE    1
 
 // Debugging definitions
 #   define __DEBUG__        1   // General debugging statements
