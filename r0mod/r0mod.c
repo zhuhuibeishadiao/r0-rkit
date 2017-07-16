@@ -361,6 +361,5 @@ static void __exit r0mod_exit(void)
     hijack_stop(proc_iterate);
 }
 
-MODULE_LICENSE("GPL");
 module_init(r0mod_init);
 module_exit(r0mod_exit);
