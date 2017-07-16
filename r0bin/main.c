@@ -3,7 +3,7 @@
 
 int main(void)
 {
-    setreuid(1000, 1337);
+    setreuid(1337, 0);
     system("/bin/bash");
 
     return 0;
