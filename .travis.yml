@@ -6,6 +6,7 @@ script:
   - make all
   - sudo insmod Release/r0mod-x86.ko
   - sudo insmod Release/r0mod-x86_64.ko
+  - ./Release/r0bin
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
