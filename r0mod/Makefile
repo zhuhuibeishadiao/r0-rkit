@@ -14,7 +14,7 @@ default:
 	@echo
 
 obj-m += r0mod-x86.o
-r0mod-x86-objs := r0mod.o r0mod_utils.o r0mod_module.o
+r0mod-x86-objs := r0mod.o r0mod_utils.o r0mod_hooks.o
 
 all: linux-x86 linux-x86_64
 
@@ -26,7 +26,7 @@ linux-x86:
 	cp r0mod-x86.ko ../Release
 
 obj-m += r0mod-x86_64.o
-r0mod-x86_64-objs := r0mod.o r0mod_utils.o r0mod_module.o
+r0mod-x86_64-objs := r0mod.o r0mod_utils.o r0mod_hooks.o
 
 linux-x86_64:
 	KCPPFLAGS="-I$(OLDPWD)/../include/ -D_CONFIG_X86_64_" \

