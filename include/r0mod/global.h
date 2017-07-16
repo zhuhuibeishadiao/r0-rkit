@@ -1,5 +1,5 @@
-#ifndef _R0MOD_GLOBAL_H
-#   define _R0MOD_GLOBAL_H
+#ifndef _R0MOD_GLOBAL_HA
+#   define _R0MOD_GLOBAL_HA
 
 #   include <linux/module.h>
 #   include <linux/version.h>
