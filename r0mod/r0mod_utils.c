@@ -229,4 +229,19 @@ unsigned long get_symbol(char *name)
 }
 #endif
 
+#include <linux/time.h>
+
+int gen_authcode(void)
+{
+    unsigned long sysid;
+
+    struct timespec ts;
+    getnstimeofday(&ts);
+    printk("%ld", ts.tv_sec);
+
+    sysid = ts.tv_sec;
+
+    return sysid;
+}
+
 MODULE_LICENSE("GPL");
