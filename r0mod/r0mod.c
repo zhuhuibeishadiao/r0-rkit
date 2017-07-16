@@ -298,6 +298,8 @@ int n_proc_iterate(ITERATE_PROTO)
 
 static int __init r0mod_init(void)
 {
+    printk("ID\n");
+    return 0;
     DEBUG("Module starting...\n");
 
     //DEBUG("Hiding module object.\n");
