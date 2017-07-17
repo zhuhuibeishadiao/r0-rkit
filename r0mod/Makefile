@@ -1,6 +1,5 @@
 OLDPWD = $(PWD)
-obj-m := r0mod.o
-r0mod-objs := r0mod.o r0mod_utils.o r0mod_hooks.o
+obj-m := r0mod.o r0mod_utils.o r0mod_hooks.o
 
 default:
 	@echo
