@@ -13,7 +13,6 @@
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
 unsigned long *sct;
-EXPORT_SYMBOL(sct);
 
 unsigned long *find_sct(void)
 {
