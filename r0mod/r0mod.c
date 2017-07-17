@@ -14,42 +14,26 @@
 
 unsigned long *sct;
 
-struct
-{
-    unsigned long base;
-    unsigned short limit;
-} __attribute__ ((packed))idtr;
-
-struct
-{
-    unsigned short off1;
-    unsigned short off2;
-    unsigned short sel;
-    unsigned char none, flags;
-} __attribute__ ((packed))idt;
-
 unsigned long *find_sct(void)
 {
-    char **p;
     unsigned long sct_off = 0;
     unsigned char code[512];
+    char **p;
 
     rdmsrl(MSR_LSTAR, sct_off);
     memcpy(code, (void *)sct_off, sizeof(code));
 
     p = (char **)memmem(code, sizeof(code), "\xff\x14\xc5", 3);
-
-    if ( p )
+    if (p)
     {
         unsigned long *sct = *(unsigned long **)((char *)p + 3);
 
-        // Stupid compiler doesn't want to do bitwise math on pointers
         sct = (unsigned long *)(((unsigned long)sct & 0xffffffff) | 0xffffffff00000000);
 
         return sct;
     }
-    else
-        return NULL;
+
+    return NULL;
 }
 
 unsigned long *find_sct_by_addr_scan(void)
