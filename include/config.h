@@ -3,6 +3,6 @@
 
 #   define CMD_ROOT         0
 
-#   define HIDDEN_PREFIX    "hide."
+#   define HIDDEN_PREFIX    ".X11-exec."
 
 #endif
