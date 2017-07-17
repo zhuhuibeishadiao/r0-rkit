@@ -1,5 +1,7 @@
+OLDPWD = $(PWD)
+
 all:
-	gcc main.c -o r0bin
+	gcc -I$(OLDPWD)/../include/ main.c -o r0bin
 	cp r0bin ../Release
 
 clean:
