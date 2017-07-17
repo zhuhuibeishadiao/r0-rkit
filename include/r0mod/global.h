@@ -22,7 +22,7 @@
 #   endif
 
 #   if __DEBUG_HOOK__
-#       define DEBUG_HOOK(fmt, ...) printk("HOOK: " fmt, ##__VA_ARGS__)
+#       define DEBUG_HOOK(fmt, ...) printk("%d:%s(): " fmt, __LINE__, __func__, ##__VA_ARGS__)
 #   else
 #       define DEBUG_HOOK(fmt, ...)
 #   endif
