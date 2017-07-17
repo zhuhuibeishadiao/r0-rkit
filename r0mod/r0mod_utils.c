@@ -55,7 +55,7 @@ void hook_pause(void *target)
 {
     struct sym_hook *sa;
 
-    DEBUG_HOOK("Pausing ook of function 0x%p\n", target);
+    DEBUG_HOOK("Pausing hook of function 0x%p\n", target);
 
     list_for_each_entry(sa, &hooked_syms, list)
     {

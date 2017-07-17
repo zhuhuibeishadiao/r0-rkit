@@ -12,12 +12,7 @@
 #   else
 #       include <linux/autoconf.h>
 #   endif
-
-// Debugging definitions
-#   define __DEBUG__        1   // General debugging statements
-#   define __DEBUG_HOOK__   1   // Debugging of inline function hooking
-#   define __DEBUG_KEY__    1   // Debugging of user keypresses
-#   define __DEBUG_RW__     1   // Debugging of sys_read and sys_write hooks
+#   include <config.h>
 
 // Debugging definitions
 #   if __DEBUG__
@@ -30,18 +25,6 @@
 #       define DEBUG_HOOK(fmt, ...) printk(fmt, ##__VA_ARGS__)
 #   else
 #       define DEBUG_HOOK(fmt, ...)
-#   endif
-
-#   if __DEBUG_KEY__
-#       define DEBUG_KEY(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG_KEY(fmt, ...)
-#   endif
-
-#   if __DEBUG_RW__
-#       define DEBUG_RW(fmt, ...) printk(fmt, ##__VA_ARGS__)
-#   else
-#       define DEBUG_RW(fmt, ...)
 #   endif
 
 struct linux_dirent
