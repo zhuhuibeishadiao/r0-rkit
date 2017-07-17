@@ -1,8 +1,7 @@
 *.project
 Release/*
-r0bin/r0bin
 r0bin/*.o
-r0mod/.tmp_versions
+r0bin/r0bin.x86*
 r0mod/*.tmp
 r0mod/*.cmd
 r0mod/*.symvers
@@ -10,3 +9,4 @@ r0mod/*.order
 r0mod/*.ko
 r0mod/*.mod.*
 r0mod/*.o
+r0mod/.tmp_versions

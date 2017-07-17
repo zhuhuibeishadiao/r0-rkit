@@ -15,13 +15,13 @@ all: clean x86 x86_64
 
 x86:
 	mkdir -p Release/
-	cd r0bin && make all
-	cd r0mod && make linux-x86
+	cd r0bin && make x86
+	cd r0mod && make all
 
 x86_64:
 	mkdir -p Release/
-	cd r0bin && make all
-	cd r0mod && make linux-x86_64
+	cd r0bin && make x86_64
+	cd r0mod && make all
 
 clean:
 	cd r0bin && make clean

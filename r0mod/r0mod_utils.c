@@ -1,6 +1,6 @@
 #include <r0mod/global.h>
 
-#if defined(_CONFIG_X86_)
+#if defined(__i386__)
 #   define HIJACK_SIZE 6
 #else
 #   define HIJACK_SIZE 12
@@ -22,7 +22,7 @@ void hook_start(void *target, void *new)
 
     struct sym_hook *sa;
 
-#if defined(_CONFIG_X86_)
+#if defined(__i386__)
     // push $addr; ret
     memcpy(n_code, "\x68\x00\x00\x00\x00\xc3", HIJACK_SIZE);
     *(unsigned long *)&n_code[1] = (unsigned long)new;
