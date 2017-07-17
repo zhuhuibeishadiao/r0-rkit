@@ -19,7 +19,7 @@ r0mod-x86-objs := r0mod.o r0mod_utils.o r0mod_hooks.o
 all: clean linux-x86 linux-x86_64
 
 linux-x86:
-	KCPPFLAGS="-I$(OLDPWD)/../include/ -D_CONFIG_X86_" \
+	KCPPFLAGS="-m32 -I$(OLDPWD)/../include/ -D_CONFIG_X86_" \
 	$(MAKE) modules \
 		ARCH=x86 -C /lib/modules/$(shell uname -r)/build M=$(PWD)
 	mkdir -p ../Release
