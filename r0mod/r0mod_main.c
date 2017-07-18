@@ -12,7 +12,7 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
-extern unsigned long *sct;
+unsigned long *sct;
 
 unsigned long *find_sct(void)
 {
@@ -53,12 +53,14 @@ unsigned long *find_sct_by_addr_scan(void)
 
 static int __init r0mod_init(void)
 {
-    printk("HELLO\n");
+    DEBUG("HELLO\n");
+
+    return 0;
 }
 
 static void __exit r0mod_exit(void)
 {
-    prinkt("GOODBYE\n");
+    DEBUG("GOODBYE\n");
 }
 
 /*

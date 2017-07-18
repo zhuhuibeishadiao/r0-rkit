@@ -11,7 +11,7 @@ default:
 	@echo "	x86_64	- Linux, x86_64"
 	@echo
 
-all: clean x86 x86_64
+all: x86 x86_64
 
 x86:
 	mkdir -p Release/

