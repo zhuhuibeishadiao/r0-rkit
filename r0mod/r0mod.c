@@ -53,9 +53,18 @@ unsigned long *find_sct_by_addr_scan(void)
 
 static int __init r0mod_init(void)
 {
-    DEBUG("Module starting...\n");
+    printk("HELLO\n");
+}
 
-    printk("HELLO!\n");
+static void __exit r0mod_exit(void)
+{
+    prinkt("GOODBYE\n");
+}
+
+/*
+static int __init r0mod_init(void)
+{
+    DEBUG("Module starting...\n");
 
     //DEBUG("Hiding module object.\n");
     //list_del_init(&__this_module.list);               // Remove from lsmod
@@ -64,8 +73,6 @@ static int __init r0mod_init(void)
 
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
-
-    return -1;
 
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");
@@ -95,6 +102,7 @@ static void __exit r0mod_exit(void)
 
     DEBUG("Module exited...\n");
 }
+*/
 
 module_init(r0mod_init);
 module_exit(r0mod_exit);

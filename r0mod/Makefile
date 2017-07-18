@@ -1,19 +1,17 @@
-OLDPWD = $(PWD)
+obj-m		:= r0mod.o
+r0mod-objs	:= r0mod_utils.o r0mod_hooks.o
 
-ifneq ($(KERNELRELEASE),)
-	obj-m		:= r0mod.o
-	r0mod-objs	:= r0mod_utils.o r0mod_hooks.o
-else
-	KERNELDIR	:= /lib/modules/$(shell uname -r)/build
-	PWD			:= $(shell pwd)
-default:
+PWD			:= $(shell pwd)
+KERNELDIR	:= /lib/modules/$(shell uname -r)/build
+
+default: all
+
 all:
-	KCPPFLAGS="-I$(OLDPWD)/../include/" \
+	KCPPFLAGS="-I$(PWD)/../include/" \
 	$(MAKE) modules \
 		-C $(KERNELDIR) M=$(PWD)
 	mkdir -p ../Release
 	cp *.ko ../Release/
-endif
 
 clean:
 	$(MAKE) clean \
