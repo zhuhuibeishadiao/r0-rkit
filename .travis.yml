@@ -3,7 +3,7 @@ sudo: required
 dist: trusty
 script:
   - sudo apt-get install -y linux-headers-`uname -r`
-  - make x64
+  - make x86_64
   - sudo insmod Release/r0mod.ko
 
 after_success:
