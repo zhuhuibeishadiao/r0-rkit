@@ -47,3 +47,5 @@ void exit_hooks(void)
 
     hook_stop(sys_setreuid);
 }
+
+MODULE_LICENSE("GPL");

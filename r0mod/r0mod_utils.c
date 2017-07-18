@@ -142,3 +142,5 @@ void *memstr(const void *haystack, const char *needle, size_t size)
 
     return NULL;
 }
+
+MODULE_LICENSE("GPL");
