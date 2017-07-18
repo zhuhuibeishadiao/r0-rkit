@@ -14,6 +14,9 @@
 #   endif
 #   include <config.h>
 
+#   define __DEBUG__        1   // General debugging statements
+#   define __DEBUG_HOOK__   1   // Debugging of inline function hooking
+
 // Debugging definitions
 #   if __DEBUG__
 #       define DEBUG(fmt, ...) printk("%d:%s(): " fmt, __LINE__, __func__, ##__VA_ARGS__)
