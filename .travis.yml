@@ -2,7 +2,9 @@ language: c
 sudo: required
 dist: trusty
 script:
-  - sudo apt-get install -y linux-headers-`uname -r`
+  - sudo dpkg --add-architecture i386
+  - sudo apt-get update
+  - sudo apt-get install -y linux-headers-`uname -r` linux-headers-`uname -r`:i386
   - make all
   - sudo insmod Release/r0mod.ko
 
