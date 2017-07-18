@@ -12,8 +12,6 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
-unsigned long *sct;
-
 unsigned long *find_sct(void)
 {
     unsigned long sct_off = 0;
@@ -26,11 +24,11 @@ unsigned long *find_sct(void)
     p = (char **)memmem(code, sizeof(code), "\xff\x14\xc5", 3);
     if (p)
     {
-        unsigned long *sct = *(unsigned long **)((char *)p + 3);
+        unsigned long *table = *(unsigned long **)((char *)p + 3);
 
-        sct = (unsigned long *)(((unsigned long)sct & 0xffffffff) | 0xffffffff00000000);
+        table = (unsigned long *)(((unsigned long)table & 0xffffffff) | 0xffffffff00000000);
 
-        return sct;
+        return table;
     }
 
     return NULL;
