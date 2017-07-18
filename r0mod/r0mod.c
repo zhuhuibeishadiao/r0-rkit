@@ -12,6 +12,8 @@
 #define SEARCH_START    PAGE_OFFSET
 #define SEARCH_END      ULONG_MAX //PAGE_OFFSET + 0xffffffff
 
+extern unsigned long *sct;
+
 unsigned long *find_sct(void)
 {
     unsigned long sct_off = 0;

